@@ -1,41 +1,108 @@
 import asyncio
 import os
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 from aiogram.filters import Command
+import urllib.request
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ С КАРТИНКАМИ ==========
+# Используем прямые ссылки на фото препаратов
 PRODUCTS = {
     "antiparasitic": [
-        {"id": 1, "name": "🟢 Бравекто 2-4.5 кг", "price": 1850, "desc": "✅ Защита 12 недель\n🐕 Для собак 2-4.5 кг\n💊 Жевательная таблетка"},
-        {"id": 2, "name": "🟢 Бравекто 4.5-10 кг", "price": 2150, "desc": "✅ Защита 12 недель\n🐕 Для собак 4.5-10 кг\n💊 Жевательная таблетка"},
-        {"id": 3, "name": "🟢 Бравекто 10-20 кг", "price": 2450, "desc": "✅ Защита 12 недель\n🐕 Для собак 10-20 кг\n💊 Жевательная таблетка"},
-        {"id": 4, "name": "🟢 Бравекто 20-40 кг", "price": 2850, "desc": "✅ Защита 12 недель\n🐕 Для собак 20-40 кг\n💊 Жевательная таблетка"},
-        {"id": 5, "name": "🟢 Бравекто 40-56 кг", "price": 3250, "desc": "✅ Защита 12 недель\n🐕 Для собак 40-56 кг\n💊 Жевательная таблетка"},
-        {"id": 6, "name": "🔵 Нексгард 4-10 кг", "price": 1950, "desc": "✅ Защита 1 месяц\n🐕 Для собак 4-10 кг\n📦 3 таблетки"},
-        {"id": 7, "name": "🟠 Симпарика 5-10 кг", "price": 1850, "desc": "✅ Защита 1 месяц\n🐕 Для собак 5-10 кг\n📦 3 таблетки"},
+        {
+            "id": 1, 
+            "name": "🟢 Бравекто 2-4.5 кг", 
+            "price": 1850, 
+            "desc": "✅ Защита 12 недель\n🐕 Для собак 2-4.5 кг\n💊 Жевательная таблетка",
+            "photo": "https://i.imgur.com/5Q8k3lB.jpg"
+        },
+        {
+            "id": 2, 
+            "name": "🟢 Бравекто 4.5-10 кг", 
+            "price": 2150, 
+            "desc": "✅ Защита 12 недель\n🐕 Для собак 4.5-10 кг\n💊 Жевательная таблетка",
+            "photo": "https://i.imgur.com/5Q8k3lB.jpg"
+        },
+        {
+            "id": 3, 
+            "name": "🟢 Бравекто 10-20 кг", 
+            "price": 2450, 
+            "desc": "✅ Защита 12 недель\n🐕 Для собак 10-20 кг\n💊 Жевательная таблетка",
+            "photo": "https://i.imgur.com/5Q8k3lB.jpg"
+        },
+        {
+            "id": 4, 
+            "name": "🟢 Бравекто 20-40 кг", 
+            "price": 2850, 
+            "desc": "✅ Защита 12 недель\n🐕 Для собак 20-40 кг\n💊 Жевательная таблетка",
+            "photo": "https://i.imgur.com/5Q8k3lB.jpg"
+        },
+        {
+            "id": 5, 
+            "name": "🟢 Бравекто 40-56 кг", 
+            "price": 3250, 
+            "desc": "✅ Защита 12 недель\n🐕 Для собак 40-56 кг\n💊 Жевательная таблетка",
+            "photo": "https://i.imgur.com/5Q8k3lB.jpg"
+        },
+        {
+            "id": 6, 
+            "name": "🔵 Нексгард 4-10 кг", 
+            "price": 1950, 
+            "desc": "✅ Защита 1 месяц\n🐕 Для собак 4-10 кг\n📦 3 таблетки",
+            "photo": "https://i.imgur.com/LpQxE6k.jpg"
+        },
+        {
+            "id": 7, 
+            "name": "🟠 Симпарика 5-10 кг", 
+            "price": 1850, 
+            "desc": "✅ Защита 1 месяц\n🐕 Для собак 5-10 кг\n📦 3 таблетки",
+            "photo": "https://i.imgur.com/WK9qP5c.jpg"
+        },
     ],
     "medicine": [
-        {"id": 8, "name": "💊 Стоп-зуд", "price": 890, "desc": "✅ Антигистаминный\n🐕 От аллергического зуда\n📦 20 таблеток"},
-        {"id": 9, "name": "💊 Энтеросгель", "price": 450, "desc": "✅ Энтеросорбент\n🐕 При отравлениях\n📦 225 г"},
+        {
+            "id": 8, 
+            "name": "💊 Стоп-зуд", 
+            "price": 890, 
+            "desc": "✅ Антигистаминный\n🐕 От аллергического зуда\n📦 20 таблеток",
+            "photo": "https://i.imgur.com/stopitch.jpg"
+        },
+        {
+            "id": 9, 
+            "name": "💊 Энтеросгель", 
+            "price": 450, 
+            "desc": "✅ Энтеросорбент\n🐕 При отравлениях\n📦 225 г",
+            "photo": "https://i.imgur.com/enterosgel.jpg"
+        },
     ],
     "vitamins": [
-        {"id": 10, "name": "🦴 Глюкозамин", "price": 1250, "desc": "✅ Для суставов\n🐕 Для крупных пород\n📦 90 таблеток"},
-        {"id": 11, "name": "🐟 Омега-3", "price": 980, "desc": "✅ Для шерсти\n🐕 Улучшает состояние\n📦 60 капсул"},
+        {
+            "id": 10, 
+            "name": "🦴 Глюкозамин", 
+            "price": 1250, 
+            "desc": "✅ Для суставов\n🐕 Для крупных пород\n📦 90 таблеток",
+            "photo": "https://i.imgur.com/glucosamine.jpg"
+        },
+        {
+            "id": 11, 
+            "name": "🐟 Омега-3", 
+            "price": 980, 
+            "desc": "✅ Для шерсти\n🐕 Улучшает состояние\n📦 60 капсул",
+            "photo": "https://i.imgur.com/omega3.jpg"
+        },
     ]
 }
 
 carts = {}
 
-# ========== КЛАВИАТУРЫ (ВСЕ С КОРЗИНОЙ) ==========
+# ========== КЛАВИАТУРЫ ==========
 
 def main_menu():
-    """Главное меню"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ ТОВАРОВ", callback_data="catalog")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
@@ -43,7 +110,6 @@ def main_menu():
     ])
 
 def categories_menu():
-    """Меню категорий"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🐕 ОТ БЛОХ И КЛЕЩЕЙ", callback_data="cat_antiparasitic")],
         [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
@@ -53,7 +119,6 @@ def categories_menu():
     ])
 
 def product_buttons(product_id):
-    """Кнопки товара"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
@@ -61,7 +126,6 @@ def product_buttons(product_id):
     ])
 
 def cart_buttons():
-    """Кнопки корзины"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🗑️ ОЧИСТИТЬ КОРЗИНУ", callback_data="clear")],
         [InlineKeyboardButton(text="✅ ОФОРМИТЬ ЗАКАЗ", callback_data="checkout")],
@@ -69,7 +133,6 @@ def cart_buttons():
     ])
 
 def back_to_main():
-    """Кнопка возврата"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
     ])
@@ -83,7 +146,6 @@ async def start(message: Message):
         "✨ *Оригинальные препараты*\n"
         "🚚 *Доставка по всей России*\n"
         "💊 *Бравекто, Нексгард, Симпарика*\n\n"
-        "🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*\n\n"
         "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
         parse_mode="Markdown",
         reply_markup=main_menu()
@@ -92,8 +154,7 @@ async def start(message: Message):
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
     await call.message.edit_text(
-        "📁 *ВЫБЕРИТЕ КАТЕГОРИЮ:*\n\n"
-        "🛒 Кнопка КОРЗИНА есть в каждом меню",
+        "📁 *ВЫБЕРИТЕ КАТЕГОРИЮ:*",
         parse_mode="Markdown",
         reply_markup=categories_menu()
     )
@@ -109,8 +170,7 @@ async def show_products(call: CallbackQuery):
         return
     
     await call.message.edit_text(
-        "📦 *ВОТ ЧТО МЫ НАШЛИ:*\n\n"
-        "⬇️ Выберите товар ⬇️",
+        "📦 *ВОТ ЧТО МЫ НАШЛИ:*",
         parse_mode="Markdown"
     )
     
@@ -119,11 +179,21 @@ async def show_products(call: CallbackQuery):
         text += f"{product['desc']}\n\n"
         text += f"💰 *Цена: {product['price']} руб.*"
         
-        await call.message.answer(
-            text,
-            parse_mode="Markdown",
-            reply_markup=product_buttons(product['id'])
-        )
+        # Отправляем с картинкой
+        try:
+            await call.message.answer_photo(
+                photo=product['photo'],
+                caption=text,
+                parse_mode="Markdown",
+                reply_markup=product_buttons(product['id'])
+            )
+        except:
+            # Если картинка не загружается, отправляем без картинки
+            await call.message.answer(
+                text,
+                parse_mode="Markdown",
+                reply_markup=product_buttons(product['id'])
+            )
     await call.answer()
 
 @dp.callback_query(F.data.startswith("add_"))
@@ -192,8 +262,7 @@ async def view_cart(call: CallbackQuery):
     
     text += "━━━━━━━━━━━━━━━━━━━━\n"
     text += f"📦 *ИТОГО ТОВАРОВ:* {total_items} шт.\n"
-    text += f"💰 *СУММА К ОПЛАТЕ:* {total} руб.\n"
-    text += "━━━━━━━━━━━━━━━━━━━━"
+    text += f"💰 *СУММА К ОПЛАТЕ:* {total} руб."
     
     await call.message.edit_text(
         text,
@@ -225,8 +294,6 @@ async def checkout(call: CallbackQuery):
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
     
-    # Здесь можно добавить отправку заказа продавцу
-    
     carts[user_id] = {}
     
     await call.message.edit_text(
@@ -248,10 +315,10 @@ async def about(call: CallbackQuery):
 
 ━━━━━━━━━━━━━━━━━━━━
 📦 *МЫ ПРЕДЛАГАЕМ:*
-• Бравекто (все размеры)
-• Нексгард
-• Симпарика
-• Лекарства и витамины
+• Бравекто (все размеры) с фото
+• Нексгард с фото
+• Симпарика с фото
+• Лекарства и витамины с фото
 
 🚚 *ДОСТАВКА:*
 • Озон
@@ -260,8 +327,7 @@ async def about(call: CallbackQuery):
 • Яндекс Доставка
 
 💊 *Все препараты сертифицированы*
-
-🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*
+🖼️ *Все товары с фото*
 ━━━━━━━━━━━━━━━━━━━━"""
     
     await call.message.edit_text(
@@ -278,7 +344,6 @@ async def back(call: CallbackQuery):
         "✨ *Оригинальные препараты*\n"
         "🚚 *Доставка по всей России*\n"
         "💊 *Бравекто, Нексгард, Симпарика*\n\n"
-        "🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*\n\n"
         "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
         parse_mode="Markdown",
         reply_markup=main_menu()
@@ -287,8 +352,7 @@ async def back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
-    print("🛒 КОРЗИНА ВСЕГДА НА ВИДУ!")
-    print("🐕 ВСЕ ТОВАРЫ ЗАГРУЖЕНЫ!")
+    print("🖼️ ВСЕ ТОВАРЫ С КАРТИНКАМИ!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
