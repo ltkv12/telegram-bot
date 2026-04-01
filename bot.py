@@ -104,6 +104,7 @@ PRODUCTS = {
 
 carts = {}
 delivery_services = {}
+last_message_ids = {}  # Храним ID последнего сообщения для редактирования
 
 # ========== КЛАВИАТУРЫ ==========
 
@@ -154,7 +155,7 @@ def back_to_main():
 
 @dp.message(Command("start"))
 async def start(message: Message):
-    await message.answer(
+    msg = await message.answer(
         "🐕 *VetProfil - ветеринарная аптека*\n\n"
         "✨ Оригинальные препараты\n"
         "🚚 Доставка по всей России\n"
@@ -163,6 +164,7 @@ async def start(message: Message):
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
+    last_message_ids[message.from_user.id] = msg.message_id
 
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
@@ -182,11 +184,13 @@ async def show_products(call: CallbackQuery):
         await call.message.edit_text("😕 Товаров в этой категории пока нет")
         return
     
+    # Отправляем сообщение с текстом
     await call.message.edit_text(
         "📦 *ВОТ ЧТО МЫ НАШЛИ:*",
         parse_mode="Markdown"
     )
     
+    # Отправляем каждый товар отдельно
     for product in products:
         text = f"*{product['name']}*\n\n"
         text += f"{product['desc']}\n\n"
@@ -352,9 +356,10 @@ async def get_address(message: Message, state: FSMContext):
     
     order_text += f"\n💰 Итого: {total} руб."
     
-    # Отправляем заказ продавцу (замени на свой ID)
+    # Отправляем заказ продавцу
+    seller_id = os.environ.get("SELLER_CHAT_ID", user_id)
     try:
-        await bot.send_message(chat_id=os.environ.get("SELLER_CHAT_ID", user_id), text=order_text, parse_mode="Markdown")
+        await bot.send_message(chat_id=seller_id, text=order_text, parse_mode="Markdown")
     except:
         pass
     
@@ -415,7 +420,7 @@ async def back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
-    print("✅ Добавлен выбор доставки и адреса")
+    print("✅ Исправлена ошибка с редактированием")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
