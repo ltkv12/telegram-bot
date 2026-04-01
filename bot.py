@@ -9,65 +9,69 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Товары
+# ========== ТОВАРЫ ==========
 PRODUCTS = {
     "antiparasitic": [
-        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг"},
-        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг"},
-        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг"},
-        {"id": 4, "name": "Нексгард 4-10 кг", "price": 1950, "desc": "Защита 1 месяц\n3 таблетки"},
+        {"id": 1, "name": "🟢 Бравекто 2-4.5 кг", "price": 1850, "desc": "✅ Защита 12 недель\n🐕 Для собак 2-4.5 кг\n💊 Жевательная таблетка"},
+        {"id": 2, "name": "🟢 Бравекто 4.5-10 кг", "price": 2150, "desc": "✅ Защита 12 недель\n🐕 Для собак 4.5-10 кг\n💊 Жевательная таблетка"},
+        {"id": 3, "name": "🟢 Бравекто 10-20 кг", "price": 2450, "desc": "✅ Защита 12 недель\n🐕 Для собак 10-20 кг\n💊 Жевательная таблетка"},
+        {"id": 4, "name": "🟢 Бравекто 20-40 кг", "price": 2850, "desc": "✅ Защита 12 недель\n🐕 Для собак 20-40 кг\n💊 Жевательная таблетка"},
+        {"id": 5, "name": "🟢 Бравекто 40-56 кг", "price": 3250, "desc": "✅ Защита 12 недель\n🐕 Для собак 40-56 кг\n💊 Жевательная таблетка"},
+        {"id": 6, "name": "🔵 Нексгард 4-10 кг", "price": 1950, "desc": "✅ Защита 1 месяц\n🐕 Для собак 4-10 кг\n📦 3 таблетки"},
+        {"id": 7, "name": "🟠 Симпарика 5-10 кг", "price": 1850, "desc": "✅ Защита 1 месяц\n🐕 Для собак 5-10 кг\n📦 3 таблетки"},
     ],
     "medicine": [
-        {"id": 5, "name": "Стоп-зуд", "price": 890, "desc": "От аллергии\n20 таблеток"},
+        {"id": 8, "name": "💊 Стоп-зуд", "price": 890, "desc": "✅ Антигистаминный\n🐕 От аллергического зуда\n📦 20 таблеток"},
+        {"id": 9, "name": "💊 Энтеросгель", "price": 450, "desc": "✅ Энтеросорбент\n🐕 При отравлениях\n📦 225 г"},
     ],
     "vitamins": [
-        {"id": 6, "name": "Глюкозамин", "price": 1250, "desc": "Для суставов\n90 таблеток"},
-        {"id": 7, "name": "Омега-3", "price": 980, "desc": "Для шерсти\n60 капсул"},
+        {"id": 10, "name": "🦴 Глюкозамин", "price": 1250, "desc": "✅ Для суставов\n🐕 Для крупных пород\n📦 90 таблеток"},
+        {"id": 11, "name": "🐟 Омега-3", "price": 980, "desc": "✅ Для шерсти\n🐕 Улучшает состояние\n📦 60 капсул"},
     ]
 }
 
 carts = {}
 
-# ========== ВСЕ МЕНЮ С КОРЗИНОЙ ==========
+# ========== КЛАВИАТУРЫ (ВСЕ С КОРЗИНОЙ) ==========
 
 def main_menu():
-    """Главное меню - КОРЗИНА ВСЕГДА ВИДНА"""
+    """Главное меню"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🛍 КАТАЛОГ", callback_data="catalog")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА 🛒", callback_data="cart")],
-        [InlineKeyboardButton(text="ℹ️ О НАС", callback_data="about")]
+        [InlineKeyboardButton(text="🛍️ КАТАЛОГ ТОВАРОВ", callback_data="catalog")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
+        [InlineKeyboardButton(text="ℹ️ О МАГАЗИНЕ", callback_data="about")]
     ])
 
 def categories_menu():
-    """Меню категорий - С КОРЗИНОЙ"""
+    """Меню категорий"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🐕 ОТ БЛОХ И КЛЕЩЕЙ", callback_data="cat_antiparasitic")],
         [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
         [InlineKeyboardButton(text="🍖 ВИТАМИНЫ", callback_data="cat_vitamins")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА 🛒", callback_data="cart")],
-        [InlineKeyboardButton(text="◀️ ГЛАВНОЕ МЕНЮ", callback_data="back")]
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
+        [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
     ])
 
 def product_buttons(product_id):
-    """Кнопки товара - С КОРЗИНОЙ"""
+    """Кнопки товара"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА 🛒", callback_data="cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
+        [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
+        [InlineKeyboardButton(text="📁 К КАТАЛОГУ", callback_data="catalog")]
     ])
 
 def cart_buttons():
     """Кнопки корзины"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🗑 ОЧИСТИТЬ", callback_data="clear")],
+        [InlineKeyboardButton(text="🗑️ ОЧИСТИТЬ КОРЗИНУ", callback_data="clear")],
         [InlineKeyboardButton(text="✅ ОФОРМИТЬ ЗАКАЗ", callback_data="checkout")],
-        [InlineKeyboardButton(text="🛍 ПРОДОЛЖИТЬ ПОКУПКИ", callback_data="catalog")]
+        [InlineKeyboardButton(text="🛍️ ПРОДОЛЖИТЬ ПОКУПКИ", callback_data="catalog")]
     ])
 
-def back_menu():
-    """Кнопка назад"""
+def back_to_main():
+    """Кнопка возврата"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="◀️ ГЛАВНОЕ МЕНЮ", callback_data="back")]
+        [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
     ])
 
 # ========== КОМАНДЫ ==========
@@ -76,11 +80,11 @@ def back_menu():
 async def start(message: Message):
     await message.answer(
         "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "✅ Оригинальные препараты\n"
-        "🚚 Доставка по всей России\n"
-        "💊 Бравекто, Нексгард, Симпарика\n\n"
-        "🛒 *КОРЗИНА ВСЕГДА ПОД РУКОЙ!*\n\n"
-        "👇 Нажмите кнопку ниже 👇",
+        "✨ *Оригинальные препараты*\n"
+        "🚚 *Доставка по всей России*\n"
+        "💊 *Бравекто, Нексгард, Симпарика*\n\n"
+        "🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*\n\n"
+        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
@@ -89,7 +93,7 @@ async def start(message: Message):
 async def catalog(call: CallbackQuery):
     await call.message.edit_text(
         "📁 *ВЫБЕРИТЕ КАТЕГОРИЮ:*\n\n"
-        "🛒 Кнопка КОРЗИНА всегда внизу",
+        "🛒 Кнопка КОРЗИНА есть в каждом меню",
         parse_mode="Markdown",
         reply_markup=categories_menu()
     )
@@ -105,15 +109,15 @@ async def show_products(call: CallbackQuery):
         return
     
     await call.message.edit_text(
-        f"📦 *ТОВАРЫ В КАТЕГОРИИ:*\n\n"
-        f"🛒 Кнопка КОРЗИНА есть у каждого товара",
+        "📦 *ВОТ ЧТО МЫ НАШЛИ:*\n\n"
+        "⬇️ Выберите товар ⬇️",
         parse_mode="Markdown"
     )
     
     for product in products:
         text = f"*{product['name']}*\n\n"
         text += f"{product['desc']}\n\n"
-        text += f"💰 *{product['price']} руб.*"
+        text += f"💰 *Цена: {product['price']} руб.*"
         
         await call.message.answer(
             text,
@@ -154,8 +158,9 @@ async def add_to_cart(call: CallbackQuery):
     total_items = sum(item['qty'] for item in carts[user_id].values())
     
     await call.answer(
-        f"✅ {product['name']} ДОБАВЛЕН!\n"
-        f"📦 В КОРЗИНЕ: {total_items} ТОВАР(ОВ)",
+        f"✅ {product['name']}\n"
+        f"ДОБАВЛЕН В КОРЗИНУ!\n\n"
+        f"📦 В корзине: {total_items} товар(ов)",
         show_alert=True
     )
 
@@ -175,17 +180,20 @@ async def view_cart(call: CallbackQuery):
     
     total = 0
     total_items = 0
-    text = "🛒 *ВАША КОРЗИНА:*\n\n"
+    text = "🛒 *ВАША КОРЗИНА*\n\n"
+    text += "━━━━━━━━━━━━━━━━━━━━\n\n"
     
     for item in cart.values():
         subtotal = item['price'] * item['qty']
-        text += f"• {item['name']}\n"
-        text += f"  {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
+        text += f"📦 *{item['name']}*\n"
+        text += f"   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
         total += subtotal
         total_items += item['qty']
     
-    text += f"📦 *ВСЕГО ТОВАРОВ:* {total_items} шт.\n"
-    text += f"💰 *ИТОГО:* {total} руб."
+    text += "━━━━━━━━━━━━━━━━━━━━\n"
+    text += f"📦 *ИТОГО ТОВАРОВ:* {total_items} шт.\n"
+    text += f"💰 *СУММА К ОПЛАТЕ:* {total} руб.\n"
+    text += "━━━━━━━━━━━━━━━━━━━━"
     
     await call.message.edit_text(
         text,
@@ -198,8 +206,8 @@ async def view_cart(call: CallbackQuery):
 async def clear_cart(call: CallbackQuery):
     carts[call.from_user.id] = {}
     await call.message.edit_text(
-        "🗑 *КОРЗИНА ОЧИЩЕНА!*\n\n"
-        "Добавьте новые товары в каталоге",
+        "🗑️ *КОРЗИНА ОЧИЩЕНА*\n\n"
+        "Можете продолжить покупки в каталоге",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
@@ -217,14 +225,18 @@ async def checkout(call: CallbackQuery):
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
     
+    # Здесь можно добавить отправку заказа продавцу
+    
     carts[user_id] = {}
     
     await call.message.edit_text(
-        f"✅ *ЗАКАЗ ОФОРМЛЕН!*\n\n"
-        f"📦 Товаров: {total_items} шт.\n"
-        f"💰 Сумма: {total} руб.\n\n"
-        f"Скоро с вами свяжется менеджер.\n\n"
-        f"Спасибо за покупку! 🐕",
+        "✅ *ЗАКАЗ ОФОРМЛЕН!*\n\n"
+        f"📦 *Товаров:* {total_items} шт.\n"
+        f"💰 *Сумма:* {total} руб.\n\n"
+        "📞 *Что дальше?*\n"
+        "Скоро с вами свяжется менеджер\n"
+        "для подтверждения заказа.\n\n"
+        "🐕 *Спасибо за покупку!*",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
@@ -234,22 +246,28 @@ async def checkout(call: CallbackQuery):
 async def about(call: CallbackQuery):
     text = """🐕 *VetProfil - ветеринарная аптека*
 
-📦 *Мы предлагаем:*
+━━━━━━━━━━━━━━━━━━━━
+📦 *МЫ ПРЕДЛАГАЕМ:*
 • Бравекто (все размеры)
 • Нексгард
 • Симпарика
 • Лекарства и витамины
 
-🚚 *Доставка:* Озон, Wildberries, СДЭК, Яндекс
+🚚 *ДОСТАВКА:*
+• Озон
+• Wildberries  
+• СДЭК
+• Яндекс Доставка
 
 💊 *Все препараты сертифицированы*
 
-🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*"""
+🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*
+━━━━━━━━━━━━━━━━━━━━"""
     
     await call.message.edit_text(
         text,
         parse_mode="Markdown",
-        reply_markup=back_menu()
+        reply_markup=back_to_main()
     )
     await call.answer()
 
@@ -257,9 +275,11 @@ async def about(call: CallbackQuery):
 async def back(call: CallbackQuery):
     await call.message.edit_text(
         "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "✅ Оригинальные препараты\n"
-        "🚚 Доставка по всей России\n\n"
-        "🛒 *КОРЗИНА ВСЕГДА ПОД РУКОЙ!*",
+        "✨ *Оригинальные препараты*\n"
+        "🚚 *Доставка по всей России*\n"
+        "💊 *Бравекто, Нексгард, Симпарика*\n\n"
+        "🛒 *КОРЗИНА ВСЕГДА ВНИЗУ!*\n\n"
+        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
@@ -267,7 +287,8 @@ async def back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
-    print("🛒 КОРЗИНА ТЕПЕРЬ ВЕЗДЕ!")
+    print("🛒 КОРЗИНА ВСЕГДА НА ВИДУ!")
+    print("🐕 ВСЕ ТОВАРЫ ЗАГРУЖЕНЫ!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
