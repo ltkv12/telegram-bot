@@ -20,7 +20,7 @@ REVIEWS_CHAT_LINK = os.environ.get("REVIEWS_CHAT_LINK", "https://t.me/+xxxxxxxxx
 
 # ========== СОСТОЯНИЯ ==========
 class OrderForm(StatesGroup):
-    waiting_for_name = State()
+    waiting_for_fullname = State()
     waiting_for_phone = State()
     waiting_for_delivery = State()
     waiting_for_pickup_point = State()
@@ -109,7 +109,7 @@ def categories_menu():
         [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
         [InlineKeyboardButton(text="🍖 ВИТАМИНЫ", callback_data="cat_vitamins")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="◀️ ГЛАВНОЕ МЕНЮ", callback_data="main_back")]
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
 def product_buttons(product_id, stock):
@@ -145,10 +145,27 @@ def delivery_menu():
 # ========== КОМАНДЫ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
-    await message.answer(
-        "🐾 VetProfil\n\nПрофессиональные решения для здоровья животных\n\n👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇",
-        reply_markup=main_menu()
-    )
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+
+💡 Отправления Яндекс, Озон или СДЭК.
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
@@ -311,36 +328,39 @@ async def clear_cart(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ==========
+# ========== ОФОРМЛЕНИЕ (С ФИО) ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
         await call.answer("Корзина пуста!", show_alert=True)
         return
-    await call.message.answer("ВВЕДИТЕ ВАШЕ ИМЯ:")
+    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 4\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович")
     await call.message.delete()
-    await state.set_state(OrderForm.waiting_for_name)
+    await state.set_state(OrderForm.waiting_for_fullname)
     await call.answer()
 
-@dp.message(OrderForm.waiting_for_name)
-async def get_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text)
-    await message.answer("ВВЕДИТЕ НОМЕР ТЕЛЕФОНА (формат +7XXXXXXXXXX):")
+@dp.message(OrderForm.waiting_for_fullname)
+async def get_fullname(message: Message, state: FSMContext):
+    if len(message.text.strip()) < 5:
+        await message.answer("❌ Введите корректное ФИО (минимум 5 символов):")
+        return
+    await state.update_data(fullname=message.text.strip())
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
     await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
 async def get_phone(message: Message, state: FSMContext):
     if not validate_phone(message.text):
-        await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ! Введите +7XXXXXXXXXX")
+        await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ!\n\nВведите номер в формате +7XXXXXXXXXX")
         return
     await state.update_data(phone=message.text)
-    await message.answer("ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:", reply_markup=delivery_menu())
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 4\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:", reply_markup=delivery_menu())
     await state.set_state(OrderForm.waiting_for_delivery)
 
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     await state.update_data(delivery=call.data.split("_")[1])
-    await call.message.answer("ВВЕДИТЕ АДРЕС ПУНКТА ВЫДАЧИ:")
+    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
     await call.message.delete()
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
@@ -356,33 +376,87 @@ async def get_pickup_point(message: Message, state: FSMContext):
         await state.clear()
         return
     
+    # Проверяем остатки
+    for product_id, item in cart.items():
+        current_stock = get_product_stock(int(product_id))
+        if item['qty'] > current_stock:
+            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
+            await state.clear()
+            return
+    
+    # Уменьшаем остатки
     for product_id, item in cart.items():
         decrease_stock(int(product_id), item['qty'])
     
     total = sum(item['price'] * item['qty'] for item in cart.values())
+    total_items = sum(item['qty'] for item in cart.values())
     
-    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n👤 {data['name']}\n📱 {data['phone']}\n🚚 {data['delivery'].upper()}\n🏠 {message.text}\n\n📦 ТОВАРЫ:\n"
+    # Формируем заказ
+    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
+    order_text += f"👤 ФИО: {data['fullname']}\n"
+    order_text += f"📱 Телефон: {data['phone']}\n"
+    order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
+    order_text += f"🏠 Пункт выдачи: {message.text}\n"
+    order_text += f"🆔 ID покупателя: {user_id}\n\n"
+    order_text += f"📦 ТОВАРЫ:\n"
+    
     for item in cart.values():
         order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
-    order_text += f"\n💰 ИТОГО: {total} руб."
     
+    order_text += f"\n💰 ИТОГО: {total} руб.\n"
+    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
+    
+    # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка: {e}")
     
+    # Очищаем корзину
     carts[user_id] = {}
     await state.clear()
-    await message.answer(f"✅ ЗАКАЗ ОФОРМЛЕН!\n\nСпасибо за покупку!", reply_markup=main_menu())
+    
+    await message.answer(
+        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
+        f"👤 {data['fullname']}\n"
+        f"📱 {data['phone']}\n"
+        f"🚚 {data['delivery'].upper()}\n"
+        f"🏠 {message.text}\n"
+        f"💰 {total} руб.\n\n"
+        f"Скоро свяжется менеджер.\n\n"
+        f"🐕 Спасибо за покупку!\n\n"
+        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
+        reply_markup=main_menu()
+    )
 
 @dp.callback_query(F.data == "main_back")
 async def main_back(call: CallbackQuery):
-    await call.message.answer("🐾 VetProfil\n\n👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇", reply_markup=main_menu())
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+
+💡 Отправления Яндекс, Озон или СДЭК.
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await call.message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
     await call.message.delete()
     await call.answer()
 
 async def main():
-    print("🚀 Бот запущен!")
+    print("🚀 Бот VetProfil запущен!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
