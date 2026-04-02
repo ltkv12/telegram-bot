@@ -95,7 +95,7 @@ def validate_phone(phone):
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
     ])
 
@@ -103,7 +103,7 @@ def admin_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📊 ОСТАТКИ ТОВАРОВ", callback_data="admin_stock")],
         [InlineKeyboardButton(text="✏️ ИЗМЕНИТЬ ОСТАТКИ", callback_data="admin_edit_stock")],
-        [InlineKeyboardButton(text="🔙 ГЛАВНОЕ МЕНЮ", callback_data="back")]
+        [InlineKeyboardButton(text="🔙 ГЛАВНОЕ МЕНЮ", callback_data="main_back")]
     ])
 
 def categories_menu():
@@ -111,8 +111,8 @@ def categories_menu():
         [InlineKeyboardButton(text="🐕 ОТ БЛОХ И КЛЕЩЕЙ", callback_data="cat_antiparasitic")],
         [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
         [InlineKeyboardButton(text="🍖 ВИТАМИНЫ", callback_data="cat_vitamins")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="back")]
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
 def product_buttons(product_id, stock):
@@ -121,14 +121,15 @@ def product_buttons(product_id, stock):
         buttons.append([InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")])
     else:
         buttons.append([InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")])
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog_back")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🗑️ ОЧИСТИТЬ", callback_data="clear")],
-        [InlineKeyboardButton(text="🚚 ОФОРМИТЬ ЗАКАЗ", callback_data="checkout")]
+        [InlineKeyboardButton(text="🗑️ ОЧИСТИТЬ", callback_data="clear_cart")],
+        [InlineKeyboardButton(text="🚚 ОФОРМИТЬ ЗАКАЗ", callback_data="checkout")],
+        [InlineKeyboardButton(text="🛍️ ПРОДОЛЖИТЬ ПОКУПКИ", callback_data="catalog")]
     ])
 
 def delivery_menu():
@@ -137,12 +138,7 @@ def delivery_menu():
         [InlineKeyboardButton(text="📦 WILDBERRIES", callback_data="delivery_wb")],
         [InlineKeyboardButton(text="🚚 СДЭК", callback_data="delivery_cdek")],
         [InlineKeyboardButton(text="🚛 ЯНДЕКС", callback_data="delivery_yandex")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="back")]
-    ])
-
-def back_to_main():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
 # ========== ПРИВЕТСТВИЕ ==========
@@ -243,6 +239,11 @@ async def catalog(call: CallbackQuery):
     await call.message.edit_text("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
     await call.answer()
 
+@dp.callback_query(F.data == "catalog_back")
+async def catalog_back(call: CallbackQuery):
+    await call.message.edit_text("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
+    await call.answer()
+
 @dp.callback_query(F.data.startswith("cat_"))
 async def show_products(call: CallbackQuery):
     category = call.data.split("_")[1]
@@ -250,7 +251,9 @@ async def show_products(call: CallbackQuery):
     if not products:
         await call.message.edit_text("😕 Товаров нет")
         return
-    await call.message.edit_text("📦 ВОТ ЧТО МЫ НАШЛИ:")
+    
+    # Отправляем сообщение-заголовок
+    await call.message.edit_text("📦 ВОТ ЧТО МЫ НАШЛИ:", reply_markup=None)
     
     is_admin_user = is_admin(call.from_user.id)
     
@@ -307,16 +310,15 @@ async def add_to_cart(call: CallbackQuery):
         carts[user_id][product_id] = {'name': product['name'], 'price': product['price'], 'qty': 1}
     
     new_in_cart = current_in_cart + 1
-    remaining = current_stock - new_in_cart
     
-    await call.answer(f"✅ {product['name']}\nДОБАВЛЕН!\n📦 В корзине: {new_in_cart} шт.\n📦 Осталось: {remaining} шт.", show_alert=True)
+    await call.answer(f"✅ {product['name']}\nДОБАВЛЕН В КОРЗИНУ!\n📦 В корзине: {new_in_cart} шт.", show_alert=True)
 
 @dp.callback_query(F.data == "no_stock")
 async def no_stock_handler(call: CallbackQuery):
     await call.answer("❌ Товар временно отсутствует!", show_alert=True)
 
 # ========== КОРЗИНА ==========
-@dp.callback_query(F.data == "cart")
+@dp.callback_query(F.data == "show_cart")
 async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
     cart = carts.get(user_id, {})
@@ -335,7 +337,7 @@ async def view_cart(call: CallbackQuery):
     await call.message.edit_text(text, reply_markup=cart_buttons())
     await call.answer()
 
-@dp.callback_query(F.data == "clear")
+@dp.callback_query(F.data == "clear_cart")
 async def clear_cart(call: CallbackQuery):
     carts[call.from_user.id] = {}
     await call.message.edit_text("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
@@ -359,7 +361,7 @@ async def get_name(message: Message, state: FSMContext):
         await message.answer("❌ Введите корректное имя (минимум 2 буквы):")
         return
     await state.update_data(name=message.text.strip())
-    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\")
     await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
@@ -376,7 +378,7 @@ async def get_phone(message: Message, state: FSMContext):
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
     await state.update_data(delivery=service)
-    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
+    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, ул. Первомайская, д. 1")
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
@@ -434,11 +436,13 @@ async def get_pickup_point(message: Message, state: FSMContext):
     order_text += f"\n💰 ИТОГО: {total} руб.\n"
     order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
     
-    # Отправляем заказ в отдельный чат
+    # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
+        print(f"Заказ отправлен в чат {ORDERS_CHAT_ID}")
     except Exception as e:
         print(f"Ошибка отправки в чат: {e}")
+        await message.answer(f"⚠️ Заказ сформирован, но не отправлен. Ошибка: {e}")
     
     # Очищаем корзину
     carts[user_id] = {}
@@ -452,13 +456,12 @@ async def get_pickup_point(message: Message, state: FSMContext):
         f"🏠 {pickup_point}\n"
         f"💰 {total} руб.\n\n"
         f"Скоро свяжется менеджер.\n\n"
-        f"🐕 Спасибо за покупку!\n\n"
-        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
+        f"🐕 Спасибо за покупку!",
         reply_markup=main_menu()
     )
 
-@dp.callback_query(F.data == "back")
-async def back(call: CallbackQuery):
+@dp.callback_query(F.data == "main_back")
+async def main_back(call: CallbackQuery):
     welcome_text = """🐾 VetProfil
 
 🐾 Профессиональные решения для здоровья животных
