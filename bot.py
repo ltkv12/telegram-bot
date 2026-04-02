@@ -21,6 +21,7 @@ REVIEWS_CHAT_LINK = os.environ.get("REVIEWS_CHAT_LINK", "https://t.me/+xxxxxxxxx
 # ========== СОСТОЯНИЯ ==========
 class OrderForm(StatesGroup):
     waiting_for_fullname = State()
+    waiting_for_username = State()
     waiting_for_phone = State()
     waiting_for_delivery = State()
     waiting_for_pickup_point = State()
@@ -328,13 +329,13 @@ async def clear_cart(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ==========
+# ========== ОФОРМЛЕНИЕ (С ВВОДОМ USERNAME) ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
         await call.answer("Корзина пуста!", show_alert=True)
         return
-    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 4\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович")
+    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 5\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович")
     await call.message.delete()
     await state.set_state(OrderForm.waiting_for_fullname)
     await call.answer()
@@ -345,7 +346,19 @@ async def get_fullname(message: Message, state: FSMContext):
         await message.answer("❌ Введите корректное ФИО (минимум 5 символов):")
         return
     await state.update_data(fullname=message.text.strip())
-    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 5\n\n🔹 ВВЕДИТЕ ВАШ USERNAME В TELEGRAM:\n\nВ формате: @username\n\nЕсли нет username, введите 'Нет'")
+    await state.set_state(OrderForm.waiting_for_username)
+
+@dp.message(OrderForm.waiting_for_username)
+async def get_username(message: Message, state: FSMContext):
+    username = message.text.strip()
+    # Убираем @ если пользователь его ввел
+    if username.startswith("@"):
+        username = username[1:]
+    if username.lower() == "нет":
+        username = "Не указан"
+    await state.update_data(username=username)
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
     await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
@@ -354,13 +367,13 @@ async def get_phone(message: Message, state: FSMContext):
         await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ!\n\nВведите номер в формате +7XXXXXXXXXX")
         return
     await state.update_data(phone=message.text)
-    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 4\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:", reply_markup=delivery_menu())
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:", reply_markup=delivery_menu())
     await state.set_state(OrderForm.waiting_for_delivery)
 
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     await state.update_data(delivery=call.data.split("_")[1])
-    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
+    await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
     await call.message.delete()
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
@@ -371,13 +384,8 @@ async def get_pickup_point(message: Message, state: FSMContext):
     user_id = message.from_user.id
     cart = carts.get(user_id, {})
     
-    # Получаем информацию о пользователе
-    user = message.from_user
-    username = user.username if user.username else "Нет username"
-    first_name = user.first_name if user.first_name else ""
-    last_name = user.last_name if user.last_name else ""
-    full_name_tg = f"{first_name} {last_name}".strip()
-    user_link = f"tg://user?id={user.id}"
+    # Получаем данные от пользователя
+    username = data.get('username', 'Не указан')
     
     if not cart:
         await message.answer("❌ Корзина пуста", reply_markup=main_menu())
@@ -402,10 +410,8 @@ async def get_pickup_point(message: Message, state: FSMContext):
     # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
-    order_text += f"📱 Телефон: {data['phone']}\n"
-    order_text += f"📝 Telegram: {full_name_tg}\n"
     order_text += f"🔹 Username: @{username}\n"
-    order_text += f"🔗 Ссылка: [Перейти в профиль]({user_link})\n"
+    order_text += f"📱 Телефон: {data['phone']}\n"
     order_text += f"🆔 ID: {user_id}\n"
     order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
     order_text += f"🏠 Пункт выдачи: {message.text}\n\n"
@@ -419,7 +425,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
     
     # Отправляем заказ в чат
     try:
-        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text, parse_mode="Markdown")
+        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка: {e}")
     
@@ -430,6 +436,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
     await message.answer(
         f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
         f"👤 {data['fullname']}\n"
+        f"🔹 @{username}\n"
         f"📱 {data['phone']}\n"
         f"🚚 {data['delivery'].upper()}\n"
         f"🏠 {message.text}\n"
