@@ -32,11 +32,11 @@ class AdminStates(StatesGroup):
 # ========== ТОВАРЫ ==========
 PRODUCTS = {
     "antiparasitic": [
-        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг\nЖевательная таблетка", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5},
-        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг\nЖевательная таблетка", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 3},
-        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг\nЖевательная таблетка", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 7},
-        {"id": 4, "name": "Бравекто 20-40 кг", "price": 2850, "desc": "Защита 12 недель\nДля собак 20-40 кг\nЖевательная таблетка", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 2},
-        {"id": 5, "name": "Бравекто 40-56 кг", "price": 3250, "desc": "Защита 12 недель\nДля собак 40-56 кг\nЖевательная таблетка", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 4},
+        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5},
+        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 3},
+        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 7},
+        {"id": 4, "name": "Бравекто 20-40 кг", "price": 2850, "desc": "Защита 12 недель\nДля собак 20-40 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 2},
+        {"id": 5, "name": "Бравекто 40-56 кг", "price": 3250, "desc": "Защита 12 недель\nДля собак 40-56 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 4},
         {"id": 6, "name": "Нексгард 4-10 кг", "price": 1950, "desc": "Защита 1 месяц\nДля собак 4-10 кг\n3 таблетки", "photo": "https://i.imgur.com/LpQxE6k.jpg", "stock": 8},
         {"id": 7, "name": "Симпарика 5-10 кг", "price": 1850, "desc": "Защита 1 месяц\nДля собак 5-10 кг\n3 таблетки", "photo": "https://i.imgur.com/WK9qP5c.jpg", "stock": 6},
     ],
@@ -77,14 +77,13 @@ def decrease_stock(product_id, quantity):
                 if p['stock'] >= quantity:
                     p['stock'] -= quantity
                     return True
-                return False
     return False
 
 def get_all_products():
-    all_products = []
+    result = []
     for cat in PRODUCTS.values():
-        all_products.extend(cat)
-    return all_products
+        result.extend(cat)
+    return result
 
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
@@ -110,14 +109,22 @@ def categories_menu():
         [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
         [InlineKeyboardButton(text="🍖 ВИТАМИНЫ", callback_data="cat_vitamins")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+        [InlineKeyboardButton(text="◀️ ГЛАВНОЕ МЕНЮ", callback_data="main_back")]
     ])
 
 def product_buttons(product_id, stock):
-    buttons = [[InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")]] if stock > 0 else [[InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")]]
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog_back")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
+    if stock > 0:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")],
+            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
+        ])
+    else:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")],
+            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
+        ])
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -160,7 +167,8 @@ async def admin_show_stock(call: CallbackQuery):
     text = "📊 ОСТАТКИ:\n\n"
     for p in products:
         text += f"ID {p['id']} - {p['name']}\n   📦 {p['stock']} шт.\n\n"
-    await call.message.edit_text(text, reply_markup=admin_menu())
+    await call.message.answer(text, reply_markup=admin_menu())
+    await call.message.delete()
     await call.answer()
 
 @dp.callback_query(F.data == "admin_edit_stock")
@@ -172,7 +180,8 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
     text = "✏️ ВВЕДИТЕ ID ТОВАРА:\n\n"
     for p in products:
         text += f"ID {p['id']} - {p['name']} (остаток: {p['stock']})\n"
-    await call.message.edit_text(text)
+    await call.message.answer(text)
+    await call.message.delete()
     await state.set_state(AdminStates.waiting_for_product_id)
     await call.answer()
 
@@ -213,12 +222,8 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
-    await call.message.edit_text("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
-    await call.answer()
-
-@dp.callback_query(F.data == "catalog_back")
-async def catalog_back(call: CallbackQuery):
-    await call.message.edit_text("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
+    await call.message.answer("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
+    await call.message.delete()
     await call.answer()
 
 @dp.callback_query(F.data.startswith("cat_"))
@@ -226,17 +231,17 @@ async def show_products(call: CallbackQuery):
     category = call.data.split("_")[1]
     products = PRODUCTS.get(category, [])
     if not products:
-        await call.message.edit_text("😕 Товаров нет")
+        await call.message.answer("😕 Товаров нет")
+        await call.message.delete()
+        await call.answer()
         return
     
-    await call.message.edit_text("📦 ТОВАРЫ:")
-    is_admin_user = is_admin(call.from_user.id)
+    await call.message.answer("📦 ТОВАРЫ:")
+    await call.message.delete()
     
     for product in products:
         stock = product['stock']
         text = f"{product['name']}\n\n{product['desc']}\n\n💰 {product['price']} руб."
-        if is_admin_user and stock > 0:
-            text += f"\n📦 В наличии: {stock} шт."
         try:
             await call.message.answer_photo(photo=product['photo'], caption=text, reply_markup=product_buttons(product['id'], stock))
         except:
@@ -282,7 +287,9 @@ async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
     cart = carts.get(user_id, {})
     if not cart:
-        await call.message.edit_text("🛒 КОРЗИНА ПУСТА", reply_markup=main_menu())
+        await call.message.answer("🛒 КОРЗИНА ПУСТА", reply_markup=main_menu())
+        await call.message.delete()
+        await call.answer()
         return
     total = 0
     total_items = 0
@@ -293,13 +300,15 @@ async def view_cart(call: CallbackQuery):
         total += subtotal
         total_items += item['qty']
     text += f"ИТОГО: {total_items} шт.\nСУММА: {total} руб."
-    await call.message.edit_text(text, reply_markup=cart_buttons())
+    await call.message.answer(text, reply_markup=cart_buttons())
+    await call.message.delete()
     await call.answer()
 
 @dp.callback_query(F.data == "clear_cart")
 async def clear_cart(call: CallbackQuery):
     carts[call.from_user.id] = {}
-    await call.message.edit_text("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
+    await call.message.answer("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
+    await call.message.delete()
     await call.answer()
 
 # ========== ОФОРМЛЕНИЕ ==========
@@ -308,7 +317,8 @@ async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
         await call.answer("Корзина пуста!", show_alert=True)
         return
-    await call.message.edit_text("ВВЕДИТЕ ВАШЕ ИМЯ:")
+    await call.message.answer("ВВЕДИТЕ ВАШЕ ИМЯ:")
+    await call.message.delete()
     await state.set_state(OrderForm.waiting_for_name)
     await call.answer()
 
@@ -330,7 +340,8 @@ async def get_phone(message: Message, state: FSMContext):
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     await state.update_data(delivery=call.data.split("_")[1])
-    await call.message.edit_text("ВВЕДИТЕ АДРЕС ПУНКТА ВЫДАЧИ:")
+    await call.message.answer("ВВЕДИТЕ АДРЕС ПУНКТА ВЫДАЧИ:")
+    await call.message.delete()
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
@@ -366,7 +377,8 @@ async def get_pickup_point(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "main_back")
 async def main_back(call: CallbackQuery):
-    await call.message.edit_text("🐾 VetProfil\n\n👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇", reply_markup=main_menu())
+    await call.message.answer("🐾 VetProfil\n\n👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇", reply_markup=main_menu())
+    await call.message.delete()
     await call.answer()
 
 async def main():
