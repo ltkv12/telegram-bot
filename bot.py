@@ -137,7 +137,7 @@ def cart_buttons():
 def delivery_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📦 ОЗОН", callback_data="delivery_ozon")],
-        [InlineKeyboardButton(text="📦 WILDBERRIES", callback_data="delivery_wb")],
+        [InlineKeyboardButton(text="🚗 САМОВЫВОЗ", callback_data="delivery_samovyvoz")],
         [InlineKeyboardButton(text="🚚 СДЭК", callback_data="delivery_cdek")],
         [InlineKeyboardButton(text="🚛 ЯНДЕКС", callback_data="delivery_yandex")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
@@ -329,7 +329,7 @@ async def clear_cart(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ (С ВВОДОМ USERNAME) ==========
+# ========== ОФОРМЛЕНИЕ ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
@@ -352,7 +352,6 @@ async def get_fullname(message: Message, state: FSMContext):
 @dp.message(OrderForm.waiting_for_username)
 async def get_username(message: Message, state: FSMContext):
     username = message.text.strip()
-    # Убираем @ если пользователь его ввел
     if username.startswith("@"):
         username = username[1:]
     if username.lower() == "нет":
@@ -372,7 +371,11 @@ async def get_phone(message: Message, state: FSMContext):
 
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
-    await state.update_data(delivery=call.data.split("_")[1])
+    service = call.data.split("_")[1]
+    # Преобразуем samovyvoz в читаемый вид
+    if service == "samovyvoz":
+        service = "САМОВЫВОЗ"
+    await state.update_data(delivery=service)
     await call.message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
     await call.message.delete()
     await state.set_state(OrderForm.waiting_for_pickup_point)
@@ -384,7 +387,6 @@ async def get_pickup_point(message: Message, state: FSMContext):
     user_id = message.from_user.id
     cart = carts.get(user_id, {})
     
-    # Получаем данные от пользователя
     username = data.get('username', 'Не указан')
     
     if not cart:
@@ -392,7 +394,6 @@ async def get_pickup_point(message: Message, state: FSMContext):
         await state.clear()
         return
     
-    # Проверяем остатки
     for product_id, item in cart.items():
         current_stock = get_product_stock(int(product_id))
         if item['qty'] > current_stock:
@@ -400,14 +401,12 @@ async def get_pickup_point(message: Message, state: FSMContext):
             await state.clear()
             return
     
-    # Уменьшаем остатки
     for product_id, item in cart.items():
         decrease_stock(int(product_id), item['qty'])
     
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
     
-    # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
     order_text += f"🔹 Username: @{username}\n"
@@ -423,13 +422,11 @@ async def get_pickup_point(message: Message, state: FSMContext):
     order_text += f"\n💰 ИТОГО: {total} руб.\n"
     order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
     
-    # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    # Очищаем корзину
     carts[user_id] = {}
     await state.clear()
     
