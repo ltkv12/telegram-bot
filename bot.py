@@ -12,9 +12,14 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# ========== ID ЧАТОВ ==========
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # Твой личный ID
-ORDERS_CHAT_ID = int(os.environ.get("ORDERS_CHAT_ID", ADMIN_ID))  # Чат для заказов
+# ========== ID ЧАТОВ И АДМИНОВ ==========
+# Твой личный ID (владелец)
+OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+# Список админов, которые могут менять остатки (через запятую в переменной ADMINS_IDS)
+ADMINS_IDS = [int(id.strip()) for id in os.environ.get("ADMINS_IDS", str(OWNER_ID)).split(",") if id.strip()]
+# Чат для заказов
+ORDERS_CHAT_ID = int(os.environ.get("ORDERS_CHAT_ID", OWNER_ID))
+# Ссылка на чат с отзывами
 REVIEWS_CHAT_LINK = os.environ.get("REVIEWS_CHAT_LINK", "https://t.me/+xxxxxxxxxxx")
 
 # ========== СОСТОЯНИЯ ==========
@@ -22,7 +27,7 @@ class OrderForm(StatesGroup):
     waiting_for_name = State()
     waiting_for_phone = State()
     waiting_for_delivery = State()
-    waiting_for_address = State()
+    waiting_for_pickup_point = State()
 
 class AdminStates(StatesGroup):
     waiting_for_product_id = State()
@@ -52,6 +57,10 @@ PRODUCTS = {
 carts = {}
 
 # ========== ФУНКЦИИ ==========
+def is_admin(user_id):
+    """Проверяет, является ли пользователь админом"""
+    return user_id in ADMINS_IDS
+
 def get_product_stock(product_id):
     for cat in PRODUCTS.values():
         for p in cat:
@@ -161,15 +170,16 @@ async def start(message: Message):
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
-    if message.from_user.id != ADMIN_ID:
-        await message.answer("⛔ У вас нет доступа")
+    """Админ-панель - только для админов из списка"""
+    if not is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет доступа к админ-панели")
         return
-    await message.answer("🔧 *АДМИН-ПАНЕЛЬ*", parse_mode="Markdown", reply_markup=admin_menu())
+    await message.answer("🔧 *АДМИН-ПАНЕЛЬ*\n\nУправление остатками товаров:", parse_mode="Markdown", reply_markup=admin_menu())
 
-# ========== АДМИН-ФУНКЦИИ ==========
+# ========== АДМИН-ФУНКЦИИ (только для админов) ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
-    if call.from_user.id != ADMIN_ID:
+    if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
@@ -181,7 +191,7 @@ async def admin_show_stock(call: CallbackQuery):
 
 @dp.callback_query(F.data == "admin_edit_stock")
 async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
-    if call.from_user.id != ADMIN_ID:
+    if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
@@ -194,7 +204,7 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
 
 @dp.message(AdminStates.waiting_for_product_id)
 async def admin_get_product_id(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if not is_admin(message.from_user.id):
         return
     try:
         product_id = int(message.text)
@@ -214,7 +224,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
 
 @dp.message(AdminStates.waiting_for_new_stock)
 async def admin_set_new_stock(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if not is_admin(message.from_user.id):
         return
     try:
         new_stock = int(message.text)
@@ -342,22 +352,22 @@ async def get_phone(message: Message, state: FSMContext):
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
     await state.update_data(delivery=service)
-    await call.message.edit_text("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 4 из 4 (последний)\n\n🏠 *ВВЕДИТЕ АДРЕС ДОСТАВКИ:*\n\nНапример: г. Москва, ул. Тверская, д. 1", parse_mode="Markdown")
-    await state.set_state(OrderForm.waiting_for_address)
+    await call.message.edit_text("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 4 из 4 (последний)\n\n🏠 *УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,*\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1", parse_mode="Markdown")
+    await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
-@dp.message(OrderForm.waiting_for_address)
-async def get_address(message: Message, state: FSMContext):
-    address = message.text.strip()
-    if len(address) < 10:
-        await message.answer("❌ Введите полный адрес (минимум 10 символов):")
+@dp.message(OrderForm.waiting_for_pickup_point)
+async def get_pickup_point(message: Message, state: FSMContext):
+    pickup_point = message.text.strip()
+    if len(pickup_point) < 10:
+        await message.answer("❌ Введите полный адрес пункта выдачи (минимум 10 символов):")
         return
-    await state.update_data(address=address)
+    await state.update_data(pickup_point=pickup_point)
     data = await state.get_data()
     name = data['name']
     phone = data['phone']
     delivery = data['delivery']
-    address = data['address']
+    pickup_point = data['pickup_point']
     user_id = message.from_user.id
     cart = carts.get(user_id, {})
     if not cart:
@@ -390,7 +400,7 @@ async def get_address(message: Message, state: FSMContext):
     order_text += f"👤 Имя: {name}\n"
     order_text += f"📱 Телефон: {phone}\n"
     order_text += f"🚚 Служба: {delivery.upper()}\n"
-    order_text += f"🏠 Адрес: {address}\n"
+    order_text += f"🏠 Пункт выдачи: {pickup_point}\n"
     order_text += f"🆔 ID покупателя: {user_id}\n\n"
     order_text += f"📦 *ТОВАРЫ:*\n"
     
@@ -403,9 +413,8 @@ async def get_address(message: Message, state: FSMContext):
     # Отправляем заказ в отдельный чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text, parse_mode="Markdown")
-        await message.answer("✅ Заказ отправлен! Менеджер свяжется с вами в ближайшее время.")
     except Exception as e:
-        await message.answer(f"❌ Ошибка при отправке заказа. Пожалуйста, попробуйте позже.\nОшибка: {str(e)}")
+        print(f"Ошибка отправки в чат: {e}")
     
     # Очищаем корзину
     carts[user_id] = {}
@@ -416,7 +425,7 @@ async def get_address(message: Message, state: FSMContext):
         f"👤 {name}\n"
         f"📱 {phone}\n"
         f"🚚 {delivery.upper()}\n"
-        f"🏠 {address}\n"
+        f"🏠 {pickup_point}\n"
         f"💰 {total} руб.\n\n"
         f"Скоро свяжется менеджер.\n\n"
         f"🐕 Спасибо за покупку!\n\n"
@@ -425,9 +434,27 @@ async def get_address(message: Message, state: FSMContext):
         reply_markup=main_menu()
     )
 
+# ========== О НАС ==========
 @dp.callback_query(F.data == "about")
 async def about(call: CallbackQuery):
-    text = "🐕 *VetProfil - ветеринарная аптека*\n\n━━━━━━━━━━━━━━━━━━━━\n📦 Бравекто, Нексгард, Симпарика\n🚚 Доставка: ОЗОН, WB, СДЭК, Яндекс\n💊 Все препараты сертифицированы\n━━━━━━━━━━━━━━━━━━━━"
+    text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+
+💡 Отправления Яндекс, Озон или СДЭК."""
+    
     await call.message.edit_text(text, parse_mode="Markdown", reply_markup=back_to_main())
     await call.answer()
 
@@ -446,6 +473,7 @@ async def back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
+    print(f"👥 Админы: {ADMINS_IDS}")
     print(f"📦 Заказы отправляются в чат: {ORDERS_CHAT_ID}")
     print("🔧 Админ-панель: /admin")
     await dp.start_polling(bot)
