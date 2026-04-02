@@ -13,13 +13,9 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # ========== ID ЧАТОВ И АДМИНОВ ==========
-# Твой личный ID (владелец)
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
-# Список админов, которые могут менять остатки (через запятую в переменной ADMINS_IDS)
 ADMINS_IDS = [int(id.strip()) for id in os.environ.get("ADMINS_IDS", str(OWNER_ID)).split(",") if id.strip()]
-# Чат для заказов
 ORDERS_CHAT_ID = int(os.environ.get("ORDERS_CHAT_ID", OWNER_ID))
-# Ссылка на чат с отзывами
 REVIEWS_CHAT_LINK = os.environ.get("REVIEWS_CHAT_LINK", "https://t.me/+xxxxxxxxxxx")
 
 # ========== СОСТОЯНИЯ ==========
@@ -58,7 +54,6 @@ carts = {}
 
 # ========== ФУНКЦИИ ==========
 def is_admin(user_id):
-    """Проверяет, является ли пользователь админом"""
     return user_id in ADMINS_IDS
 
 def get_product_stock(product_id):
@@ -101,8 +96,7 @@ def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
-        [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)],
-        [InlineKeyboardButton(text="ℹ️ О НАС", callback_data="about")]
+        [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
     ])
 
 def admin_menu():
@@ -121,19 +115,21 @@ def categories_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="back")]
     ])
 
-def product_buttons(product_id, stock):
+def product_buttons(product_id, stock, is_admin_user=False):
+    """Кнопки товара - с корзиной"""
+    buttons = []
+    
+    # Кнопка добавления в корзину (всегда есть)
     if stock > 0:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=f"➕ В КОРЗИНУ (остаток: {stock})", callback_data=f"add_{product_id}")],
-            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
-            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-        ])
+        buttons.append([InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")])
     else:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")],
-            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")],
-            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-        ])
+        buttons.append([InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")])
+    
+    # Кнопка корзины
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -155,22 +151,33 @@ def back_to_main():
         [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
     ])
 
-# ========== КОМАНДЫ ==========
+# ========== ПРИВЕТСТВИЕ (информация о магазине) ==========
 @dp.message(Command("start"))
 async def start(message: Message):
-    await message.answer(
-        "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "✨ Оригинальные препараты\n"
-        "🚚 Доставка по всей России\n"
-        "💊 Бравекто, Нексгард, Симпарика\n\n"
-        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
-        parse_mode="Markdown",
-        reply_markup=main_menu()
-    )
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+
+💡 Отправления Яндекс, Озон или СДЭК.
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
-    """Админ-панель - только для админов из списка"""
     if not is_admin(message.from_user.id):
         await message.answer("⛔ У вас нет доступа к админ-панели")
         return
@@ -250,13 +257,35 @@ async def show_products(call: CallbackQuery):
         await call.message.edit_text("😕 Товаров нет")
         return
     await call.message.edit_text("📦 *ВОТ ЧТО МЫ НАШЛИ:*", parse_mode="Markdown")
+    
+    is_admin_user = is_admin(call.from_user.id)
+    
     for product in products:
         stock = product['stock']
-        text = f"*{product['name']}*\n\n{product['desc']}\n\n💰 *{product['price']} руб.*\n" + (f"📦 *В наличии: {stock} шт.*" if stock > 0 else "❌ *НЕТ В НАЛИЧИИ*")
+        
+        # Формируем текст: для админов показываем остатки, для клиентов - нет
+        text = f"*{product['name']}*\n\n{product['desc']}\n\n💰 *{product['price']} руб.*"
+        
+        # Только админы видят остатки
+        if is_admin_user:
+            if stock > 0:
+                text += f"\n📦 *В наличии: {stock} шт.*"
+            else:
+                text += f"\n❌ *НЕТ В НАЛИЧИИ*"
+        
         try:
-            await call.message.answer_photo(photo=product['photo'], caption=text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
+            await call.message.answer_photo(
+                photo=product['photo'], 
+                caption=text, 
+                parse_mode="Markdown", 
+                reply_markup=product_buttons(product['id'], stock, is_admin_user)
+            )
         except:
-            await call.message.answer(text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
+            await call.message.answer(
+                text, 
+                parse_mode="Markdown", 
+                reply_markup=product_buttons(product['id'], stock, is_admin_user)
+            )
     await call.answer()
 
 @dp.callback_query(F.data.startswith("add_"))
@@ -271,20 +300,25 @@ async def add_to_cart(call: CallbackQuery):
     if not product:
         await call.answer("❌ Товар не найден")
         return
+    
     user_id = call.from_user.id
     current_stock = product['stock']
     current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
+    
     if current_in_cart >= current_stock:
         await call.answer(f"❌ НЕЛЬЗЯ ДОБАВИТЬ БОЛЬШЕ!\n📦 В наличии: {current_stock} шт.\n🛒 Уже в корзине: {current_in_cart} шт.", show_alert=True)
         return
+    
     if user_id not in carts:
         carts[user_id] = {}
     if product_id in carts[user_id]:
         carts[user_id][product_id]['qty'] += 1
     else:
         carts[user_id][product_id] = {'name': product['name'], 'price': product['price'], 'qty': 1}
+    
     new_in_cart = current_in_cart + 1
     remaining = current_stock - new_in_cart
+    
     await call.answer(f"✅ {product['name']}\nДОБАВЛЕН!\n📦 В корзине: {new_in_cart} шт.\n📦 Осталось: {remaining} шт.", show_alert=True)
 
 @dp.callback_query(F.data == "no_stock")
@@ -434,10 +468,9 @@ async def get_pickup_point(message: Message, state: FSMContext):
         reply_markup=main_menu()
     )
 
-# ========== О НАС ==========
-@dp.callback_query(F.data == "about")
-async def about(call: CallbackQuery):
-    text = """🐾 *VetProfil* 
+@dp.callback_query(F.data == "back")
+async def back(call: CallbackQuery):
+    welcome_text = """🐾 *VetProfil* 
 
 🐾 *Профессиональные решения для здоровья животных* 
 
@@ -453,22 +486,11 @@ async def about(call: CallbackQuery):
 
 🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
 
-💡 Отправления Яндекс, Озон или СДЭК."""
-    
-    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=back_to_main())
-    await call.answer()
+💡 Отправления Яндекс, Озон или СДЭК.
 
-@dp.callback_query(F.data == "back")
-async def back(call: CallbackQuery):
-    await call.message.edit_text(
-        "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "✨ Оригинальные препараты\n"
-        "🚚 Доставка по всей России\n"
-        "💊 Бравекто, Нексгард, Симпарика\n\n"
-        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
-        parse_mode="Markdown",
-        reply_markup=main_menu()
-    )
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await call.message.edit_text(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
     await call.answer()
 
 async def main():
