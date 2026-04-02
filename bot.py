@@ -142,7 +142,7 @@ def delivery_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-# ========== КОМАНДЫ ==========
+# ========== ПРИВЕТСТВИЕ С ОПИСАНИЕМ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
     welcome_text = """🐾 *VetProfil* 
