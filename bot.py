@@ -115,7 +115,7 @@ def categories_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="back")]
     ])
 
-def product_buttons(product_id, stock, is_admin_user=False):
+def product_buttons(product_id, stock):
     buttons = []
     if stock > 0:
         buttons.append([InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")])
@@ -269,12 +269,12 @@ async def show_products(call: CallbackQuery):
             await call.message.answer_photo(
                 photo=product['photo'], 
                 caption=text, 
-                reply_markup=product_buttons(product['id'], stock, is_admin_user)
+                reply_markup=product_buttons(product['id'], stock)
             )
         except:
             await call.message.answer(
                 text, 
-                reply_markup=product_buttons(product['id'], stock, is_admin_user)
+                reply_markup=product_buttons(product['id'], stock)
             )
     await call.answer()
 
@@ -331,7 +331,7 @@ async def view_cart(call: CallbackQuery):
         text += f"📦 {item['name']}\n   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
         total += subtotal
         total_items += item['qty']
-    text += "━━━━━━━━━━━━━━━━━━━━\n📦 ИТОГО: {total_items} шт.\n💰 СУММА: {total} руб."
+    text += "━━━━━━━━━━━━━━━━━━━━\n📦 ИТОГО: " + str(total_items) + " шт.\n💰 СУММА: " + str(total) + " руб."
     await call.message.edit_text(text, reply_markup=cart_buttons())
     await call.answer()
 
