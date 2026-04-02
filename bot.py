@@ -116,19 +116,13 @@ def categories_menu():
     ])
 
 def product_buttons(product_id, stock, is_admin_user=False):
-    """Кнопки товара - с корзиной"""
     buttons = []
-    
-    # Кнопка добавления в корзину (всегда есть)
     if stock > 0:
         buttons.append([InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")])
     else:
         buttons.append([InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")])
-    
-    # Кнопка корзины
     buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="cart")])
     buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
-    
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
@@ -151,49 +145,49 @@ def back_to_main():
         [InlineKeyboardButton(text="🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]
     ])
 
-# ========== ПРИВЕТСТВИЕ (информация о магазине) ==========
+# ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
-    welcome_text = """🐾 *VetProfil* 
+    welcome_text = """🐾 VetProfil
 
-🐾 *Профессиональные решения для здоровья животных* 
+🐾 Профессиональные решения для здоровья животных
 
-✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты
 
-⚡️ Внимательно подбираем ассортимент 
-⚡️ Контролируем качество 
-⚡️ Работаем на результат 
+⚡️ Внимательно подбираем ассортимент
+⚡️ Контролируем качество
+⚡️ Работаем на результат
 
-❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+❤️ Для тех, кто заботится о своих питомцах осознанно
 
-✅ *VetProfil — надёжный партнёр в ветеринарии*
+✅ VetProfil — надёжный партнёр в ветеринарии
 
-🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными).
 
 💡 Отправления Яндекс, Озон или СДЭК.
 
-👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇"""
     
-    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
+    await message.answer(welcome_text, reply_markup=main_menu())
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
     if not is_admin(message.from_user.id):
         await message.answer("⛔ У вас нет доступа к админ-панели")
         return
-    await message.answer("🔧 *АДМИН-ПАНЕЛЬ*\n\nУправление остатками товаров:", parse_mode="Markdown", reply_markup=admin_menu())
+    await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление остатками товаров:", reply_markup=admin_menu())
 
-# ========== АДМИН-ФУНКЦИИ (только для админов) ==========
+# ========== АДМИН-ФУНКЦИИ ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
-    text = "📊 *ТЕКУЩИЕ ОСТАТКИ:*\n\n"
+    text = "📊 ТЕКУЩИЕ ОСТАТКИ:\n\n"
     for p in products:
-        text += f"🆔 *ID:{p['id']}* - {p['name']}\n   📦 Остаток: {p['stock']} шт.\n\n"
-    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=admin_menu())
+        text += f"🆔 ID:{p['id']} - {p['name']}\n   📦 Остаток: {p['stock']} шт.\n\n"
+    await call.message.edit_text(text, reply_markup=admin_menu())
     await call.answer()
 
 @dp.callback_query(F.data == "admin_edit_stock")
@@ -202,10 +196,10 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
-    text = "✏️ *ВВЕДИТЕ ID ТОВАРА:*\n\n"
+    text = "✏️ ВВЕДИТЕ ID ТОВАРА:\n\n"
     for p in products:
         text += f"🆔 ID: {p['id']} - {p['name']} (остаток: {p['stock']})\n"
-    await call.message.edit_text(text, parse_mode="Markdown")
+    await call.message.edit_text(text)
     await state.set_state(AdminStates.waiting_for_product_id)
     await call.answer()
 
@@ -222,7 +216,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
                 break
         if product:
             await state.update_data(product_id=product_id)
-            await message.answer(f"📦 *{product['name']}*\n📊 Текущий остаток: {product['stock']} шт.\n\n✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК:*", parse_mode="Markdown")
+            await message.answer(f"📦 {product['name']}\n📊 Текущий остаток: {product['stock']} шт.\n\n✏️ ВВЕДИТЕ НОВЫЙ ОСТАТОК:")
             await state.set_state(AdminStates.waiting_for_new_stock)
         else:
             await message.answer("❌ Товар не найден. Попробуйте еще раз:")
@@ -238,7 +232,7 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
         data = await state.get_data()
         product_id = data['product_id']
         update_product_stock(product_id, new_stock)
-        await message.answer(f"✅ *ОСТАТКИ ОБНОВЛЕНЫ!*\n🆔 ID: {product_id}\n📦 Новый остаток: {new_stock} шт.", parse_mode="Markdown", reply_markup=admin_menu())
+        await message.answer(f"✅ ОСТАТКИ ОБНОВЛЕНЫ!\n🆔 ID: {product_id}\n📦 Новый остаток: {new_stock} шт.", reply_markup=admin_menu())
         await state.clear()
     except ValueError:
         await message.answer("❌ Введите число")
@@ -246,7 +240,7 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
-    await call.message.edit_text("📁 *ВЫБЕРИТЕ КАТЕГОРИЮ:*", parse_mode="Markdown", reply_markup=categories_menu())
+    await call.message.edit_text("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
     await call.answer()
 
 @dp.callback_query(F.data.startswith("cat_"))
@@ -256,34 +250,30 @@ async def show_products(call: CallbackQuery):
     if not products:
         await call.message.edit_text("😕 Товаров нет")
         return
-    await call.message.edit_text("📦 *ВОТ ЧТО МЫ НАШЛИ:*", parse_mode="Markdown")
+    await call.message.edit_text("📦 ВОТ ЧТО МЫ НАШЛИ:")
     
     is_admin_user = is_admin(call.from_user.id)
     
     for product in products:
         stock = product['stock']
         
-        # Формируем текст: для админов показываем остатки, для клиентов - нет
-        text = f"*{product['name']}*\n\n{product['desc']}\n\n💰 *{product['price']} руб.*"
+        text = f"{product['name']}\n\n{product['desc']}\n\n💰 Цена: {product['price']} руб."
         
-        # Только админы видят остатки
         if is_admin_user:
             if stock > 0:
-                text += f"\n📦 *В наличии: {stock} шт.*"
+                text += f"\n📦 В наличии: {stock} шт."
             else:
-                text += f"\n❌ *НЕТ В НАЛИЧИИ*"
+                text += f"\n❌ НЕТ В НАЛИЧИИ"
         
         try:
             await call.message.answer_photo(
                 photo=product['photo'], 
                 caption=text, 
-                parse_mode="Markdown", 
                 reply_markup=product_buttons(product['id'], stock, is_admin_user)
             )
         except:
             await call.message.answer(
                 text, 
-                parse_mode="Markdown", 
                 reply_markup=product_buttons(product['id'], stock, is_admin_user)
             )
     await call.answer()
@@ -331,24 +321,24 @@ async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
     cart = carts.get(user_id, {})
     if not cart:
-        await call.message.edit_text("🛒 *КОРЗИНА ПУСТА*\n\nДобавьте товары из каталога", parse_mode="Markdown", reply_markup=main_menu())
+        await call.message.edit_text("🛒 КОРЗИНА ПУСТА\n\nДобавьте товары из каталога", reply_markup=main_menu())
         return
     total = 0
     total_items = 0
-    text = "🛒 *ВАША КОРЗИНА*\n\n━━━━━━━━━━━━━━━━━━━━\n\n"
+    text = "🛒 ВАША КОРЗИНА\n\n━━━━━━━━━━━━━━━━━━━━\n\n"
     for item in cart.values():
         subtotal = item['price'] * item['qty']
-        text += f"📦 *{item['name']}*\n   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
+        text += f"📦 {item['name']}\n   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
         total += subtotal
         total_items += item['qty']
-    text += "━━━━━━━━━━━━━━━━━━━━\n📦 *ИТОГО:* {total_items} шт.\n💰 *СУММА:* {total} руб."
-    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=cart_buttons())
+    text += "━━━━━━━━━━━━━━━━━━━━\n📦 ИТОГО: {total_items} шт.\n💰 СУММА: {total} руб."
+    await call.message.edit_text(text, reply_markup=cart_buttons())
     await call.answer()
 
 @dp.callback_query(F.data == "clear")
 async def clear_cart(call: CallbackQuery):
     carts[call.from_user.id] = {}
-    await call.message.edit_text("🗑️ *КОРЗИНА ОЧИЩЕНА*", parse_mode="Markdown", reply_markup=main_menu())
+    await call.message.edit_text("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
     await call.answer()
 
 # ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
@@ -359,7 +349,7 @@ async def checkout(call: CallbackQuery, state: FSMContext):
     if not cart:
         await call.answer("Корзина пуста!", show_alert=True)
         return
-    await call.message.edit_text("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 1 из 4\n\n✏️ *ВВЕДИТЕ ВАШЕ ИМЯ:*\n\nНапример: Иван", parse_mode="Markdown")
+    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 4\n\n✏️ ВВЕДИТЕ ВАШЕ ИМЯ:\n\nНапример: Иван")
     await state.set_state(OrderForm.waiting_for_name)
     await call.answer()
 
@@ -369,24 +359,24 @@ async def get_name(message: Message, state: FSMContext):
         await message.answer("❌ Введите корректное имя (минимум 2 буквы):")
         return
     await state.update_data(name=message.text.strip())
-    await message.answer("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 2 из 4\n\n📱 *ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:*\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567", parse_mode="Markdown")
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
     await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
 async def get_phone(message: Message, state: FSMContext):
     phone = message.text.strip()
     if not validate_phone(phone):
-        await message.answer("❌ *НЕВЕРНЫЙ ФОРМАТ!*\n\nВведите номер в формате +7XXXXXXXXXX", parse_mode="Markdown")
+        await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ!\n\nВведите номер в формате +7XXXXXXXXXX")
         return
     await state.update_data(phone=phone)
-    await message.answer("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 3 из 4\n\n🚚 *ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:*", parse_mode="Markdown", reply_markup=delivery_menu())
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 4\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:", reply_markup=delivery_menu())
     await state.set_state(OrderForm.waiting_for_delivery)
 
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
     await state.update_data(delivery=service)
-    await call.message.edit_text("📝 *ОФОРМЛЕНИЕ ЗАКАЗА*\n\nШаг 4 из 4 (последний)\n\n🏠 *УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,*\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1", parse_mode="Markdown")
+    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
@@ -415,7 +405,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
         current_stock = get_product_stock(int(product_id))
         if item['qty'] > current_stock:
             can_checkout = False
-            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.", parse_mode="Markdown")
+            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
             break
     
     if not can_checkout:
@@ -430,23 +420,23 @@ async def get_pickup_point(message: Message, state: FSMContext):
     total_items = sum(item['qty'] for item in cart.values())
     
     # Формируем заказ
-    order_text = f"✅ *НОВЫЙ ЗАКАЗ!*\n\n"
+    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 Имя: {name}\n"
     order_text += f"📱 Телефон: {phone}\n"
     order_text += f"🚚 Служба: {delivery.upper()}\n"
     order_text += f"🏠 Пункт выдачи: {pickup_point}\n"
     order_text += f"🆔 ID покупателя: {user_id}\n\n"
-    order_text += f"📦 *ТОВАРЫ:*\n"
+    order_text += f"📦 ТОВАРЫ:\n"
     
     for item in cart.values():
         order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
     
-    order_text += f"\n💰 *ИТОГО:* {total} руб.\n"
-    order_text += f"📦 *ВСЕГО ТОВАРОВ:* {total_items} шт."
+    order_text += f"\n💰 ИТОГО: {total} руб.\n"
+    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
     
     # Отправляем заказ в отдельный чат
     try:
-        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text, parse_mode="Markdown")
+        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка отправки в чат: {e}")
     
@@ -455,7 +445,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
     await state.clear()
     
     await message.answer(
-        f"✅ *ЗАКАЗ ОФОРМЛЕН!*\n\n"
+        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
         f"👤 {name}\n"
         f"📱 {phone}\n"
         f"🚚 {delivery.upper()}\n"
@@ -463,34 +453,33 @@ async def get_pickup_point(message: Message, state: FSMContext):
         f"💰 {total} руб.\n\n"
         f"Скоро свяжется менеджер.\n\n"
         f"🐕 Спасибо за покупку!\n\n"
-        f"⭐ *Оставьте отзыв в разделе 'ОТЗЫВЫ'*",
-        parse_mode="Markdown",
+        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
         reply_markup=main_menu()
     )
 
 @dp.callback_query(F.data == "back")
 async def back(call: CallbackQuery):
-    welcome_text = """🐾 *VetProfil* 
+    welcome_text = """🐾 VetProfil
 
-🐾 *Профессиональные решения для здоровья животных* 
+🐾 Профессиональные решения для здоровья животных
 
-✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты
 
-⚡️ Внимательно подбираем ассортимент 
-⚡️ Контролируем качество 
-⚡️ Работаем на результат 
+⚡️ Внимательно подбираем ассортимент
+⚡️ Контролируем качество
+⚡️ Работаем на результат
 
-❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+❤️ Для тех, кто заботится о своих питомцах осознанно
 
-✅ *VetProfil — надёжный партнёр в ветеринарии*
+✅ VetProfil — надёжный партнёр в ветеринарии
 
-🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
+🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными).
 
 💡 Отправления Яндекс, Озон или СДЭК.
 
-👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇"""
     
-    await call.message.edit_text(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
+    await call.message.edit_text(welcome_text, reply_markup=main_menu())
     await call.answer()
 
 async def main():
