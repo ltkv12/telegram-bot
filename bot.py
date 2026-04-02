@@ -51,6 +51,7 @@ PRODUCTS = {
 }
 
 carts = {}
+user_last_message = {}  # Храним ID последнего сообщения
 
 # ========== ФУНКЦИИ ==========
 def is_admin(user_id):
@@ -164,7 +165,8 @@ async def start(message: Message):
 
 👇 ВЫБЕРИТЕ ДЕЙСТВИЕ 👇"""
     
-    await message.answer(welcome_text, reply_markup=main_menu())
+    msg = await message.answer(welcome_text, reply_markup=main_menu())
+    user_last_message[message.from_user.id] = msg.message_id
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
@@ -252,8 +254,7 @@ async def show_products(call: CallbackQuery):
         await call.message.edit_text("😕 Товаров нет")
         return
     
-    # Отправляем сообщение-заголовок
-    await call.message.edit_text("📦 ВОТ ЧТО МЫ НАШЛИ:", reply_markup=None)
+    await call.message.edit_text("📦 ВОТ ЧТО МЫ НАШЛИ:")
     
     is_admin_user = is_admin(call.from_user.id)
     
@@ -361,7 +362,7 @@ async def get_name(message: Message, state: FSMContext):
         await message.answer("❌ Введите корректное имя (минимум 2 буквы):")
         return
     await state.update_data(name=message.text.strip())
-    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\")
+    await message.answer("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 4\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567")
     await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
@@ -378,7 +379,7 @@ async def get_phone(message: Message, state: FSMContext):
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
     await state.update_data(delivery=service)
-    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, ул. Первомайская, д. 1")
+    await call.message.edit_text("📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 4 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1")
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
@@ -439,10 +440,8 @@ async def get_pickup_point(message: Message, state: FSMContext):
     # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
-        print(f"Заказ отправлен в чат {ORDERS_CHAT_ID}")
     except Exception as e:
         print(f"Ошибка отправки в чат: {e}")
-        await message.answer(f"⚠️ Заказ сформирован, но не отправлен. Ошибка: {e}")
     
     # Очищаем корзину
     carts[user_id] = {}
