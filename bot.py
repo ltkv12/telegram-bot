@@ -142,7 +142,7 @@ def delivery_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-# ========== ПРИВЕТСТВИЕ С ОПИСАНИЕМ ==========
+# ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
     welcome_text = """🐾 *VetProfil* 
@@ -328,7 +328,7 @@ async def clear_cart(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ (С ФИО) ==========
+# ========== ОФОРМЛЕНИЕ ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
@@ -423,7 +423,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
         f"🚚 {data['delivery'].upper()}\n"
         f"🏠 {message.text}\n"
         f"💰 {total} руб.\n\n"
-        f"Скоро свяжется менеджер.\n\n"
+        f"В ближайшее время с Вами свяжутся для согласования заказа.\n\n"
         f"🐕 Спасибо за покупку!\n\n"
         f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
         reply_markup=main_menu()
