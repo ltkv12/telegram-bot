@@ -227,6 +227,15 @@ def faq_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
+def search_result_buttons(product_id):
+    """Кнопки для добавления товара из поиска в корзину"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+        [InlineKeyboardButton(text="🔍 НОВЫЙ ПОИСК", callback_data="search")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+    ])
+
 # ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
@@ -294,17 +303,22 @@ async def search_products_handler(message: Message, state: FSMContext):
         await state.clear()
         return
     
-    # Показываем результаты поиска
-    text = f"🔍 *Результаты поиска по запросу:* \"{query}\"\n\n"
-    text += f"📦 Найдено товаров: {len(results)}\n\n"
-    
+    # Показываем результаты поиска (без остатков)
     for product in results:
-        text += f"• *{product['name_ru']}* / *{product['name_en']}*\n"
-        text += f"  💰 {product['price']}₽ | 📅 годен до {product['expiry']} | 📦 в наличии: {product['stock']} шт.\n\n"
+        text = f"🔍 *Результат поиска:*\n\n"
+        text += f"📦 *{product['name_ru']}* / *{product['name_en']}*\n"
+        text += f"💰 Цена: {product['price']}₽\n"
+        text += f"📅 Срок годности: {product['expiry']}\n"
+        text += f"⚖️ Вес: {product['weight']}\n\n"
+        text += f"👇 *Добавьте товар в корзину* 👇"
+        
+        # Отправляем каждый товар отдельно с кнопкой добавления
+        await message.answer(
+            text,
+            parse_mode="Markdown",
+            reply_markup=search_result_buttons(product['id'])
+        )
     
-    text += "👇 *Для добавления в корзину, перейдите в каталог* 👇"
-    
-    await message.answer(text, parse_mode="Markdown", reply_markup=faq_menu())
     await state.clear()
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
@@ -892,6 +906,7 @@ async def main():
     print("🚀 Бот VetProfil запущен!")
     print(f"📦 Загружено товаров: {len(ALL_PRODUCTS)}")
     print("🔍 Поиск работает на русском и английском")
+    print("➕ Из поиска можно добавить в корзину")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
