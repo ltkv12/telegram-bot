@@ -76,13 +76,55 @@ TIXFLI = [
     {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
 ]
 
-# Общий список всех товаров
-ALL_PRODUCTS_LIST = BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI
+# Словарь категорий
+CATEGORIES = {
+    "bravecto_tablets": {
+        "name": "🟢 Бравекто (таблетки)",
+        "short_name": "Бравекто таблетки",
+        "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
+        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
+        "products": BRAVECTO_TABLETS,
+        "keywords": ["бравекто", "bravecto", "bravecto tablets", "bravecto таблетки", "бравекто таблетки"]
+    },
+    "bravecto_drops": {
+        "name": "🟢 Бравекто (капли)",
+        "short_name": "Бравекто капли",
+        "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
+        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
+        "products": BRAVECTO_DROPS,
+        "keywords": ["бравекто капли", "bravecto drops", "bravecto капли", "капли бравекто"]
+    },
+    "simparica": {
+        "name": "🟠 Симпарика",
+        "short_name": "Симпарика",
+        "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
+        "photo": "https://i.imgur.com/WK9qP5c.jpg",
+        "products": SIMPARICA,
+        "keywords": ["симпарика", "simparica", "симпарика таблетки"]
+    },
+    "simparica_trio": {
+        "name": "🟠 Симпарика ТРИО",
+        "short_name": "Симпарика ТРИО",
+        "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
+        "photo": "https://i.imgur.com/WK9qP5c.jpg",
+        "products": SIMPARICA_TRIO,
+        "keywords": ["симпарика трио", "simparica trio", "симпарика трио таблетки"]
+    },
+    "tixfli": {
+        "name": "🔵 Тиксфли",
+        "short_name": "Тиксфли",
+        "desc": "✅ Защита от блох и клещей",
+        "photo": "https://i.imgur.com/8Qk3lB.jpg",
+        "products": TIXFLI,
+        "keywords": ["тиксфли", "tixfli", "тиксфли таблетки"]
+    }
+}
 
-# Словарь для быстрого поиска по ID
+# Общий словарь всех товаров по ID
 ALL_PRODUCTS = {}
-for item in ALL_PRODUCTS_LIST:
-    ALL_PRODUCTS[item["id"]] = item
+for cat in CATEGORIES.values():
+    for product in cat["products"]:
+        ALL_PRODUCTS[product["id"]] = product
 
 carts = {}
 
@@ -92,14 +134,16 @@ def is_admin(user_id):
 def get_product(product_id):
     return ALL_PRODUCTS.get(product_id)
 
-def search_products(query):
-    """Глобальный поиск по всем товарам"""
+def search_categories(query):
+    """Поиск категорий по ключевым словам"""
     query_lower = query.lower().strip()
-    results = []
-    for product in ALL_PRODUCTS_LIST:
-        if query_lower in product["name_ru"].lower() or query_lower in product["name_en"].lower():
-            results.append(product)
-    return results
+    found_categories = []
+    for cat_key, cat_data in CATEGORIES.items():
+        for keyword in cat_data["keywords"]:
+            if keyword in query_lower:
+                found_categories.append((cat_key, cat_data))
+                break
+    return found_categories
 
 def update_product_price(product_id, new_price):
     if product_id in ALL_PRODUCTS:
@@ -171,44 +215,21 @@ def product_buttons(product_id):
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
     ])
 
-def bravecto_tablets_buttons():
+def category_buttons(category_key, products):
     buttons = []
-    for p in BRAVECTO_TABLETS:
+    for p in products:
         buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
     buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
     buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def bravecto_drops_buttons():
+def search_result_menu(categories_list):
+    """Меню выбора категории при поиске"""
     buttons = []
-    for p in BRAVECTO_DROPS:
-        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    for cat_key, cat_data in categories_list:
+        buttons.append([InlineKeyboardButton(text=cat_data["short_name"], callback_data=f"search_go_{cat_key}")])
     buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def simparica_buttons():
-    buttons = []
-    for p in SIMPARICA:
-        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def simparica_trio_buttons():
-    buttons = []
-    for p in SIMPARICA_TRIO:
-        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def tixfli_buttons():
-    buttons = []
-    for p in TIXFLI:
-        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
@@ -231,15 +252,6 @@ def faq_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
         [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
-    ])
-
-def search_result_buttons(product_id):
-    """Кнопки для добавления товара из поиска в корзину"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="🔍 НОВЫЙ ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
@@ -275,12 +287,12 @@ async def admin_panel(message: Message):
 @dp.callback_query(F.data == "search")
 async def search_start(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(
-        "🔍 *ПОИСК ТОВАРОВ*\n\n"
+        "🔍 *ПОИСК ТОВАРОВ В КАТАЛОГЕ*\n\n"
         "Введите название товара на русском или английском языке.\n\n"
         "Примеры:\n"
-        "• Бравекто / Bravecto\n"
-        "• Симпарика / Simparica\n"
-        "• Тиксфли / Tixfli\n\n"
+        "• Бравекто / Bravecto - покажет Бравекто (таблетки и капли)\n"
+        "• Симпарика / Simparica - покажет Симпарику\n"
+        "• Тиксфли / Tixfli - покажет Тиксфли\n\n"
         "🔎 Введите запрос:",
         parse_mode="Markdown"
     )
@@ -295,46 +307,95 @@ async def search_products_handler(message: Message, state: FSMContext):
         await message.answer("❌ Введите минимум 2 символа для поиска")
         return
     
-    results = search_products(query)
+    # Ищем категории по запросу
+    found_categories = search_categories(query)
     
-    if not results:
-        await message.answer(
-            f"🔍 По запросу *{query}* ничего не найдено.\n\n"
-            f"Попробуйте:\n"
-            f"• Бравекто / Bravecto\n"
-            f"• Симпарика / Simparica\n"
-            f"• Тиксфли / Tixfli",
-            parse_mode="Markdown",
-            reply_markup=faq_menu()
-        )
+    if not found_categories:
+        # Показываем возможные варианты
+        variants = "🔍 *По вашему запросу ничего не найдено.*\n\n"
+        variants += "Попробуйте один из вариантов:\n"
+        variants += "• Бравекто / Bravecto\n"
+        variants += "• Бравекто капли / Bravecto drops\n"
+        variants += "• Симпарика / Simparica\n"
+        variants += "• Симпарика трио / Simparica trio\n"
+        variants += "• Тиксфли / Tixfli"
+        
+        await message.answer(variants, parse_mode="Markdown", reply_markup=faq_menu())
         await state.clear()
         return
     
-    # Отправляем результаты поиска (как в каталоге - с фото)
-    await message.answer(f"🔍 *Результаты поиска по запросу:* \"{query}\"\n\n📦 Найдено товаров: {len(results)}", parse_mode="Markdown")
-    
-    for product in results:
-        text = f"*{product['name_ru']}* / *{product['name_en']}*\n\n"
-        text += f"⚖️ Вес: {product['weight']}\n"
-        text += f"💰 Цена: {product['price']}₽\n"
-        text += f"📅 Срок годности: {product['expiry']}\n\n"
-        text += f"👇 *Добавьте товар в корзину* 👇"
+    # Если найдена одна категория - открываем её сразу
+    if len(found_categories) == 1:
+        cat_key, cat_data = found_categories[0]
+        text = f"*{cat_data['name']}*\n\n"
+        text += f"{cat_data['desc']}\n\n"
+        text += "*📊 Доступные варианты:*\n"
+        
+        for p in cat_data['products']:
+            text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
+        
+        text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
         
         try:
             await message.answer_photo(
-                photo=product['photo'],
+                photo=cat_data['photo'],
                 caption=text,
                 parse_mode="Markdown",
-                reply_markup=search_result_buttons(product['id'])
+                reply_markup=category_buttons(cat_key, cat_data['products'])
             )
-        except Exception as e:
+        except:
             await message.answer(
                 text,
                 parse_mode="Markdown",
-                reply_markup=search_result_buttons(product['id'])
+                reply_markup=category_buttons(cat_key, cat_data['products'])
             )
+    else:
+        # Если найдено несколько категорий - показываем меню выбора
+        text = f"🔍 *По запросу \"{query}\" найдено несколько категорий:*\n\n"
+        for cat_key, cat_data in found_categories:
+            text += f"• {cat_data['short_name']}\n"
+        text += "\n👇 *ВЫБЕРИТЕ НУЖНУЮ КАТЕГОРИЮ* 👇"
+        
+        await message.answer(
+            text,
+            parse_mode="Markdown",
+            reply_markup=search_result_menu(found_categories)
+        )
     
     await state.clear()
+
+@dp.callback_query(F.data.startswith("search_go_"))
+async def search_go_to_category(call: CallbackQuery):
+    category_key = call.data.split("_")[2]
+    category_data = CATEGORIES.get(category_key)
+    
+    if not category_data:
+        await call.answer("❌ Категория не найдена")
+        return
+    
+    text = f"*{category_data['name']}*\n\n"
+    text += f"{category_data['desc']}\n\n"
+    text += "*📊 Доступные варианты:*\n"
+    
+    for p in category_data['products']:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
+    
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
+    
+    try:
+        await call.message.answer_photo(
+            photo=category_data['photo'],
+            caption=text,
+            parse_mode="Markdown",
+            reply_markup=category_buttons(category_key, category_data['products'])
+        )
+    except:
+        await call.message.answer(
+            text,
+            parse_mode="Markdown",
+            reply_markup=category_buttons(category_key, category_data['products'])
+        )
+    await call.answer()
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
@@ -394,25 +455,11 @@ async def admin_show_stock(call: CallbackQuery):
     
     text = "📊 *ВСЕ ТОВАРЫ:*\n\n"
     
-    text += "🟢 *Бравекто (таблетки)*\n"
-    for p in BRAVECTO_TABLETS:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
-    
-    text += "\n🟢 *Бравекто (капли)*\n"
-    for p in BRAVECTO_DROPS:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
-    
-    text += "\n🟠 *Симпарика*\n"
-    for p in SIMPARICA:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
-    
-    text += "\n🟠 *Симпарика ТРИО*\n"
-    for p in SIMPARICA_TRIO:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
-    
-    text += "\n🔵 *Тиксфли*\n"
-    for p in TIXFLI:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+    for cat_key, cat_data in CATEGORIES.items():
+        text += f"📁 *{cat_data['short_name']}*\n"
+        for p in cat_data['products']:
+            text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += "\n"
     
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
@@ -425,11 +472,9 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
         return
     
     text = "✏️ *ВВЕДИТЕ ID ТОВАРА ДЛЯ РЕДАКТИРОВАНИЯ:*\n\n"
-    text += "🟢 Бравекто (таблетки): ID 1,2,3,4,5\n"
-    text += "🟢 Бравекто (капли): ID 6,7\n"
-    text += "🟠 Симпарика: ID 8-13\n"
-    text += "🟠 Симпарика ТРИО: ID 14-19\n"
-    text += "🔵 Тиксфли: ID 20-24\n"
+    for cat_key, cat_data in CATEGORIES.items():
+        ids = [str(p['id']) for p in cat_data['products']]
+        text += f"📁 {cat_data['short_name']}: {', '.join(ids)}\n"
     
     await call.message.answer(text, parse_mode="Markdown")
     await call.message.delete()
@@ -625,7 +670,7 @@ async def show_bravecto_tablets(call: CallbackQuery):
         photo="https://i.imgur.com/5Q8k3lB.jpg",
         caption=text,
         parse_mode="Markdown",
-        reply_markup=bravecto_tablets_buttons()
+        reply_markup=category_buttons("bravecto_tablets", BRAVECTO_TABLETS)
     )
     await call.answer()
 
@@ -644,7 +689,7 @@ async def show_bravecto_drops(call: CallbackQuery):
         photo="https://i.imgur.com/5Q8k3lB.jpg",
         caption=text,
         parse_mode="Markdown",
-        reply_markup=bravecto_drops_buttons()
+        reply_markup=category_buttons("bravecto_drops", BRAVECTO_DROPS)
     )
     await call.answer()
 
@@ -663,7 +708,7 @@ async def show_simparica(call: CallbackQuery):
         photo="https://i.imgur.com/WK9qP5c.jpg",
         caption=text,
         parse_mode="Markdown",
-        reply_markup=simparica_buttons()
+        reply_markup=category_buttons("simparica", SIMPARICA)
     )
     await call.answer()
 
@@ -682,7 +727,7 @@ async def show_simparica_trio(call: CallbackQuery):
         photo="https://i.imgur.com/WK9qP5c.jpg",
         caption=text,
         parse_mode="Markdown",
-        reply_markup=simparica_trio_buttons()
+        reply_markup=category_buttons("simparica_trio", SIMPARICA_TRIO)
     )
     await call.answer()
 
@@ -701,7 +746,7 @@ async def show_tixfli(call: CallbackQuery):
         photo="https://i.imgur.com/8Qk3lB.jpg",
         caption=text,
         parse_mode="Markdown",
-        reply_markup=tixfli_buttons()
+        reply_markup=category_buttons("tixfli", TIXFLI)
     )
     await call.answer()
 
@@ -909,9 +954,7 @@ async def main_back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
-    print(f"📦 Загружено товаров: {len(ALL_PRODUCTS)}")
-    print("🔍 Поиск работает на русском и английском")
-    print("🖼️ Товары из поиска отображаются с фото")
+    print("🔍 Поиск: 'Бравекто' покажет таблетки и капли")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
