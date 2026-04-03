@@ -33,76 +33,123 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ С ИНДИВИДУАЛЬНЫМИ ФОТОГРАФИЯМИ ==========
 PRODUCTS = {
-    "antiparasitic": [
-        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5, "expiry": "12.2026"},
-        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 3, "expiry": "12.2026"},
-        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 7, "expiry": "12.2026"},
-        {"id": 4, "name": "Бравекто 20-40 кг", "price": 2850, "desc": "Защита 12 недель\nДля собак 20-40 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 2, "expiry": "12.2026"},
-        {"id": 5, "name": "Бравекто 40-56 кг", "price": 3250, "desc": "Защита 12 недель\nДля собак 40-56 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 4, "expiry": "12.2026"},
-        {"id": 6, "name": "Нексгард 4-10 кг", "price": 1950, "desc": "Защита 1 месяц\nДля собак 4-10 кг\n3 таблетки", "photo": "https://i.imgur.com/LpQxE6k.jpg", "stock": 8, "expiry": "10.2026"},
-        {"id": 7, "name": "Симпарика 5-10 кг", "price": 1850, "desc": "Защита 1 месяц\nДля собак 5-10 кг\n3 таблетки", "photo": "https://i.imgur.com/WK9qP5c.jpg", "stock": 6, "expiry": "10.2026"},
-    ],
-    "medicine": [
-        {"id": 8, "name": "Стоп-зуд", "price": 890, "desc": "Антигистаминный\nОт аллергического зуда\n20 таблеток", "photo": "https://i.imgur.com/8Qk3lB.jpg", "stock": 10, "expiry": "08.2027"},
-        {"id": 9, "name": "Энтеросгель", "price": 450, "desc": "Энтеросорбент\nПри отравлениях\n225 г", "photo": "https://i.imgur.com/9Qk3lB.jpg", "stock": 15, "expiry": "05.2027"},
-    ],
-    "vitamins": [
-        {"id": 10, "name": "Глюкозамин", "price": 1250, "desc": "Для суставов\nДля крупных пород\n90 таблеток", "photo": "https://i.imgur.com/glucosamine.jpg", "stock": 12, "expiry": "03.2027"},
-        {"id": 11, "name": "Омега-3", "price": 980, "desc": "Для шерсти\nУлучшает состояние\n60 капсул", "photo": "https://i.imgur.com/omega3.jpg", "stock": 20, "expiry": "03.2027"},
-    ],
+    "bravecto_tablets": {
+        "name": "Бравекто (таблетки)",
+        "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
+        "photo": "https://i.imgur.com/bravecto_tablets.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "variants": [
+            {"weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
+            {"weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
+            {"weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
+            {"weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
+            {"weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+        ]
+    },
+    "bravecto_drops": {
+        "name": "Бравекто (капли)",
+        "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
+        "photo": "https://i.imgur.com/bravecto_drops.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "variants": [
+            {"weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
+            {"weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
+        ]
+    },
+    "simparica": {
+        "name": "Симпарика",
+        "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
+        "photo": "https://i.imgur.com/simparica.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "variants": [
+            {"weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
+            {"weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
+            {"weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
+            {"weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
+            {"weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
+            {"weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
+        ]
+    },
+    "simparica_trio": {
+        "name": "Симпарика ТРИО",
+        "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
+        "photo": "https://i.imgur.com/simparica_trio.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "variants": [
+            {"weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
+            {"weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
+            {"weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
+            {"weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
+            {"weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
+            {"weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+        ]
+    },
+    "tixfli": {
+        "name": "Тиксфли",
+        "desc": "✅ Защита от блох и клещей",
+        "photo": "https://i.imgur.com/tixfli.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "variants": [
+            {"weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
+            {"weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
+            {"weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
+            {"weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
+            {"weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
+        ]
+    }
 }
+
+# Для обратной совместимости: словарь всех вариантов с уникальными ID
+ALL_VARIANTS = {}
+variant_counter = 1
+for product_key, product_data in PRODUCTS.items():
+    for variant in product_data["variants"]:
+        variant["id"] = variant_counter
+        variant["product_key"] = product_key
+        variant["product_name"] = product_data["name"]
+        variant["product_photo"] = product_data["photo"]
+        ALL_VARIANTS[variant_counter] = variant
+        variant_counter += 1
 
 carts = {}
 
 def is_admin(user_id):
     return user_id in ADMINS_IDS
 
-def get_product(product_id):
-    for cat in PRODUCTS.values():
-        for p in cat:
-            if p['id'] == product_id:
-                return p
-    return None
+def get_variant(variant_id):
+    return ALL_VARIANTS.get(variant_id)
 
-def get_product_stock(product_id):
-    product = get_product(product_id)
-    return product['stock'] if product else 0
+def get_product_stock(variant_id):
+    variant = get_variant(variant_id)
+    return variant['stock'] if variant else 0
 
-def update_product_price(product_id, new_price):
-    product = get_product(product_id)
-    if product:
-        product['price'] = new_price
+def update_variant_price(variant_id, new_price):
+    variant = get_variant(variant_id)
+    if variant:
+        variant['price'] = new_price
         return True
     return False
 
-def update_product_stock(product_id, new_stock):
-    product = get_product(product_id)
-    if product:
-        product['stock'] = new_stock
+def update_variant_stock(variant_id, new_stock):
+    variant = get_variant(variant_id)
+    if variant:
+        variant['stock'] = new_stock
         return True
     return False
 
-def update_product_expiry(product_id, new_expiry):
-    product = get_product(product_id)
-    if product:
-        product['expiry'] = new_expiry
+def update_variant_expiry(variant_id, new_expiry):
+    variant = get_variant(variant_id)
+    if variant:
+        variant['expiry'] = new_expiry
         return True
     return False
 
-def decrease_stock(product_id, quantity):
-    product = get_product(product_id)
-    if product and product['stock'] >= quantity:
-        product['stock'] -= quantity
+def decrease_stock(variant_id, quantity):
+    variant = get_variant(variant_id)
+    if variant and variant['stock'] >= quantity:
+        variant['stock'] -= quantity
         return True
     return False
 
-def get_all_products():
-    result = []
-    for cat in PRODUCTS.values():
-        result.extend(cat)
-    return result
+def get_all_variants():
+    return list(ALL_VARIANTS.values())
 
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
@@ -123,36 +170,34 @@ def admin_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-def edit_choice_menu(product_id):
+def edit_choice_menu(variant_id, variant_name):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💰 ИЗМЕНИТЬ ЦЕНУ", callback_data=f"edit_price_{product_id}")],
-        [InlineKeyboardButton(text="📦 ИЗМЕНИТЬ ОСТАТКИ", callback_data=f"edit_stock_{product_id}")],
-        [InlineKeyboardButton(text="📅 ИЗМЕНИТЬ СРОК ГОДНОСТИ", callback_data=f"edit_expiry_{product_id}")],
+        [InlineKeyboardButton(text="💰 ИЗМЕНИТЬ ЦЕНУ", callback_data=f"edit_price_{variant_id}")],
+        [InlineKeyboardButton(text="📦 ИЗМЕНИТЬ ОСТАТКИ", callback_data=f"edit_stock_{variant_id}")],
+        [InlineKeyboardButton(text="📅 ИЗМЕНИТЬ СРОК ГОДНОСТИ", callback_data=f"edit_expiry_{variant_id}")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="admin_back")]
     ])
 
 def categories_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🐕 ОТ БЛОХ И КЛЕЩЕЙ", callback_data="cat_antiparasitic")],
-        [InlineKeyboardButton(text="💊 ЛЕКАРСТВА", callback_data="cat_medicine")],
-        [InlineKeyboardButton(text="🍖 ВИТАМИНЫ", callback_data="cat_vitamins")],
+        [InlineKeyboardButton(text="🟢 БРАВЕКТО (таблетки)", callback_data="product_bravecto_tablets")],
+        [InlineKeyboardButton(text="🟢 БРАВЕКТО (капли)", callback_data="product_bravecto_drops")],
+        [InlineKeyboardButton(text="🟠 СИМПАРИКА", callback_data="product_simparica")],
+        [InlineKeyboardButton(text="🟠 СИМПАРИКА ТРИО", callback_data="product_simparica_trio")],
+        [InlineKeyboardButton(text="🔵 ТИКСФЛИ", callback_data="product_tixfli")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-def product_buttons(product_id, stock):
-    if stock > 0:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")],
-            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-        ])
-    else:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="❌ НЕТ В НАЛИЧИИ", callback_data="no_stock")],
-            [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-            [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-        ])
+def variant_buttons(product_key, variants):
+    buttons = []
+    for variant in variants:
+        weight = variant['weight']
+        price = variant['price']
+        buttons.append([InlineKeyboardButton(text=f"📦 {weight} - {price}₽", callback_data=f"add_{variant['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -259,14 +304,14 @@ async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
-    products = get_all_products()
+    variants = get_all_variants()
     text = "📊 *ВСЕ ТОВАРЫ:*\n\n"
-    for p in products:
-        text += f"🆔 ID: {p['id']}\n"
-        text += f"📦 *{p['name']}*\n"
-        text += f"   💰 Цена: {p['price']} руб.\n"
-        text += f"   📦 Остаток: {p['stock']} шт.\n"
-        text += f"   📅 Срок годности: {p.get('expiry', 'Не указан')}\n\n"
+    for v in variants:
+        text += f"🆔 ID: {v['id']}\n"
+        text += f"📦 *{v['product_name']}* - {v['weight']}\n"
+        text += f"   💰 Цена: {v['price']} руб.\n"
+        text += f"   📦 Остаток: {v['stock']} шт.\n"
+        text += f"   📅 Срок годности: {v.get('expiry', 'Не указан')}\n\n"
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
     await call.answer()
@@ -277,10 +322,10 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
-    products = get_all_products()
+    variants = get_all_variants()
     text = "✏️ *ВВЕДИТЕ ID ТОВАРА ДЛЯ РЕДАКТИРОВАНИЯ:*\n\n"
-    for p in products:
-        text += f"🆔 ID: {p['id']} - {p['name']}\n"
+    for v in variants:
+        text += f"🆔 ID: {v['id']} - {v['product_name']} ({v['weight']})\n"
     await call.message.answer(text, parse_mode="Markdown")
     await call.message.delete()
     await state.set_state(AdminStates.waiting_for_product_id)
@@ -291,18 +336,18 @@ async def admin_get_product_id(message: Message, state: FSMContext):
     if not is_admin(message.from_user.id):
         return
     try:
-        product_id = int(message.text)
-        product = get_product(product_id)
-        if product:
-            await state.update_data(product_id=product_id)
+        variant_id = int(message.text)
+        variant = get_variant(variant_id)
+        if variant:
+            await state.update_data(variant_id=variant_id)
             await message.answer(
-                f"📦 *{product['name']}*\n\n"
-                f"💰 Цена: {product['price']} руб.\n"
-                f"📦 Остаток: {product['stock']} шт.\n"
-                f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
+                f"📦 *{variant['product_name']}* - {variant['weight']}\n\n"
+                f"💰 Цена: {variant['price']} руб.\n"
+                f"📦 Остаток: {variant['stock']} шт.\n"
+                f"📅 Срок годности: {variant.get('expiry', 'Не указан')}\n\n"
                 f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
                 parse_mode="Markdown",
-                reply_markup=edit_choice_menu(product_id)
+                reply_markup=edit_choice_menu(variant_id, variant['product_name'])
             )
             await state.clear()
         else:
@@ -316,13 +361,13 @@ async def admin_edit_price(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
-    product_id = int(call.data.split("_")[2])
-    product = get_product(product_id)
-    if product:
-        await state.update_data(product_id=product_id)
+    variant_id = int(call.data.split("_")[2])
+    variant = get_variant(variant_id)
+    if variant:
+        await state.update_data(variant_id=variant_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
-            f"💰 Текущая цена: {product['price']} руб.\n\n"
+            f"📦 *{variant['product_name']}* - {variant['weight']}\n"
+            f"💰 Текущая цена: {variant['price']} руб.\n\n"
             f"✏️ *ВВЕДИТЕ НОВУЮ ЦЕНУ (только число):*",
             parse_mode="Markdown"
         )
@@ -339,12 +384,12 @@ async def admin_set_new_price(message: Message, state: FSMContext):
             await message.answer("❌ Цена должна быть больше 0!")
             return
         data = await state.get_data()
-        product_id = data['product_id']
-        update_product_price(product_id, new_price)
-        product = get_product(product_id)
+        variant_id = data['variant_id']
+        update_variant_price(variant_id, new_price)
+        variant = get_variant(variant_id)
         await message.answer(
             f"✅ *ЦЕНА ОБНОВЛЕНА!*\n\n"
-            f"📦 {product['name']}\n"
+            f"📦 {variant['product_name']} - {variant['weight']}\n"
             f"💰 Новая цена: {new_price} руб.",
             parse_mode="Markdown",
             reply_markup=admin_menu()
@@ -359,13 +404,13 @@ async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
-    product_id = int(call.data.split("_")[2])
-    product = get_product(product_id)
-    if product:
-        await state.update_data(product_id=product_id)
+    variant_id = int(call.data.split("_")[2])
+    variant = get_variant(variant_id)
+    if variant:
+        await state.update_data(variant_id=variant_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
-            f"📦 Текущий остаток: {product['stock']} шт.\n\n"
+            f"📦 *{variant['product_name']}* - {variant['weight']}\n"
+            f"📦 Текущий остаток: {variant['stock']} шт.\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):*",
             parse_mode="Markdown"
         )
@@ -382,12 +427,12 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
             await message.answer("❌ Остаток не может быть отрицательным!")
             return
         data = await state.get_data()
-        product_id = data['product_id']
-        update_product_stock(product_id, new_stock)
-        product = get_product(product_id)
+        variant_id = data['variant_id']
+        update_variant_stock(variant_id, new_stock)
+        variant = get_variant(variant_id)
         await message.answer(
             f"✅ *ОСТАТКИ ОБНОВЛЕНЫ!*\n\n"
-            f"📦 {product['name']}\n"
+            f"📦 {variant['product_name']} - {variant['weight']}\n"
             f"📦 Новый остаток: {new_stock} шт.",
             parse_mode="Markdown",
             reply_markup=admin_menu()
@@ -402,13 +447,13 @@ async def admin_edit_expiry(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
-    product_id = int(call.data.split("_")[2])
-    product = get_product(product_id)
-    if product:
-        await state.update_data(product_id=product_id)
+    variant_id = int(call.data.split("_")[2])
+    variant = get_variant(variant_id)
+    if variant:
+        await state.update_data(variant_id=variant_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
-            f"📅 Текущий срок годности: {product.get('expiry', 'Не указан')}\n\n"
+            f"📦 *{variant['product_name']}* - {variant['weight']}\n"
+            f"📅 Текущий срок годности: {variant.get('expiry', 'Не указан')}\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ СРОК ГОДНОСТИ*\n"
             f"В формате: ММ.ГГГГ\n"
             f"Например: 12.2026",
@@ -434,13 +479,13 @@ async def admin_set_new_expiry(message: Message, state: FSMContext):
         return
     
     data = await state.get_data()
-    product_id = data['product_id']
-    update_product_expiry(product_id, new_expiry)
-    product = get_product(product_id)
+    variant_id = data['variant_id']
+    update_variant_expiry(variant_id, new_expiry)
+    variant = get_variant(variant_id)
     
     await message.answer(
         f"✅ *СРОК ГОДНОСТИ ОБНОВЛЁН!*\n\n"
-        f"📦 {product['name']}\n"
+        f"📦 {variant['product_name']} - {variant['weight']}\n"
         f"📅 Новый срок годности: {new_expiry}",
         parse_mode="Markdown",
         reply_markup=admin_menu()
@@ -460,73 +505,75 @@ async def admin_back(call: CallbackQuery):
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
-    await call.message.answer("📁 ВЫБЕРИТЕ КАТЕГОРИЮ:", reply_markup=categories_menu())
+    await call.message.answer("📁 *ВЫБЕРИТЕ ТОВАР:*", parse_mode="Markdown", reply_markup=categories_menu())
     await call.message.delete()
     await call.answer()
 
-@dp.callback_query(F.data.startswith("cat_"))
-async def show_products(call: CallbackQuery):
-    category = call.data.split("_")[1]
-    products = PRODUCTS.get(category, [])
-    if not products:
-        await call.message.answer("😕 Товаров нет")
-        await call.message.delete()
-        await call.answer()
+# ========== ПОКАЗ ТОВАРА С ВАРИАНТАМИ ВЕСА ==========
+@dp.callback_query(F.data.startswith("product_"))
+async def show_product(call: CallbackQuery):
+    product_key = call.data.split("_")[1]
+    product_data = PRODUCTS.get(product_key)
+    
+    if not product_data:
+        await call.message.answer("😕 Товар не найден")
         return
     
-    await call.message.answer("📦 ТОВАРЫ:")
-    await call.message.delete()
+    # Формируем описание с таблицей весов
+    text = f"*{product_data['name']}*\n\n"
+    text += f"{product_data['desc']}\n\n"
+    text += "*📊 Доступные варианты:*\n"
     
-    is_admin_user = is_admin(call.from_user.id)
+    for variant in product_data['variants']:
+        text += f"• {variant['weight']} - {variant['price']}₽ (годен до {variant['expiry']})\n"
     
-    for product in products:
-        stock = product['stock']
-        expiry = product.get('expiry', 'Не указан')
-        
-        text = f"*{product['name']}*\n\n"
-        text += f"{product['desc']}\n\n"
-        text += f"💰 *Цена: {product['price']} руб.*\n"
-        text += f"📅 *Срок годности:* {expiry}\n"
-        
-        if is_admin_user:
-            if stock > 0:
-                text += f"📦 *В наличии: {stock} шт.*"
-            else:
-                text += f"❌ *НЕТ В НАЛИЧИИ*"
-        
-        try:
-            await call.message.answer_photo(photo=product['photo'], caption=text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
-        except:
-            await call.message.answer(text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
+    
+    try:
+        await call.message.answer_photo(
+            photo=product_data['photo'],
+            caption=text,
+            parse_mode="Markdown",
+            reply_markup=variant_buttons(product_key, product_data['variants'])
+        )
+    except Exception as e:
+        print(f"Ошибка отправки фото: {e}")
+        await call.message.answer(
+            text,
+            parse_mode="Markdown",
+            reply_markup=variant_buttons(product_key, product_data['variants'])
+        )
     await call.answer()
 
+# ========== ДОБАВЛЕНИЕ В КОРЗИНУ ==========
 @dp.callback_query(F.data.startswith("add_"))
 async def add_to_cart(call: CallbackQuery):
-    product_id = int(call.data.split("_")[1])
-    product = get_product(product_id)
-    if not product:
+    variant_id = int(call.data.split("_")[1])
+    variant = get_variant(variant_id)
+    
+    if not variant:
         await call.answer("❌ Товар не найден")
         return
     
     user_id = call.from_user.id
-    current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
+    current_in_cart = carts.get(user_id, {}).get(variant_id, {}).get('qty', 0)
     
-    if current_in_cart >= product['stock']:
-        await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {product['stock']} шт.", show_alert=True)
+    if current_in_cart >= variant['stock']:
+        await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {variant['stock']} шт.", show_alert=True)
         return
     
     if user_id not in carts:
         carts[user_id] = {}
-    if product_id in carts[user_id]:
-        carts[user_id][product_id]['qty'] += 1
+    if variant_id in carts[user_id]:
+        carts[user_id][variant_id]['qty'] += 1
     else:
-        carts[user_id][product_id] = {'name': product['name'], 'price': product['price'], 'qty': 1}
+        carts[user_id][variant_id] = {
+            'name': f"{variant['product_name']} ({variant['weight']})",
+            'price': variant['price'],
+            'qty': 1
+        }
     
-    await call.answer(f"✅ {product['name']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
-
-@dp.callback_query(F.data == "no_stock")
-async def no_stock_handler(call: CallbackQuery):
-    await call.answer("❌ Нет в наличии", show_alert=True)
+    await call.answer(f"✅ {variant['product_name']} ({variant['weight']})\nВ корзине: {carts[user_id][variant_id]['qty']} шт.", show_alert=True)
 
 # ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
@@ -540,14 +587,14 @@ async def view_cart(call: CallbackQuery):
         return
     total = 0
     total_items = 0
-    text = "🛒 ВАША КОРЗИНА\n\n"
+    text = "🛒 *ВАША КОРЗИНА*\n\n"
     for item in cart.values():
         subtotal = item['price'] * item['qty']
-        text += f"{item['name']}\n   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
+        text += f"📦 {item['name']}\n   {item['price']} руб. × {item['qty']} = {subtotal} руб.\n\n"
         total += subtotal
         total_items += item['qty']
-    text += f"ИТОГО: {total_items} шт.\nСУММА: {total} руб."
-    await call.message.answer(text, reply_markup=cart_buttons())
+    text += f"📦 *ИТОГО:* {total_items} шт.\n💰 *СУММА:* {total} руб."
+    await call.message.answer(text, parse_mode="Markdown", reply_markup=cart_buttons())
     await call.message.delete()
     await call.answer()
 
@@ -623,16 +670,16 @@ async def get_pickup_point(message: Message, state: FSMContext):
         return
     
     # Проверяем остатки
-    for product_id, item in cart.items():
-        current_stock = get_product_stock(int(product_id))
+    for variant_id, item in cart.items():
+        current_stock = get_product_stock(int(variant_id))
         if item['qty'] > current_stock:
             await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
             await state.clear()
             return
     
     # Уменьшаем остатки
-    for product_id, item in cart.items():
-        decrease_stock(int(product_id), item['qty'])
+    for variant_id, item in cart.items():
+        decrease_stock(int(variant_id), item['qty'])
     
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
@@ -701,6 +748,7 @@ async def main_back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
+    print(f"📦 Загружено товаров: {len(get_all_variants())}")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
