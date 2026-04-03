@@ -26,6 +26,9 @@ class OrderForm(StatesGroup):
     waiting_for_delivery = State()
     waiting_for_pickup_point = State()
 
+class SearchForm(StatesGroup):
+    waiting_for_query = State()
+
 class AdminStates(StatesGroup):
     waiting_for_product_id = State()
     waiting_for_edit_choice = State()
@@ -33,54 +36,52 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ (ПРОСТАЯ СТРУКТУРА) ==========
-# Бравекто таблетки
+# ========== ТОВАРЫ (РУССКИЕ И АНГЛИЙСКИЕ НАЗВАНИЯ) ==========
 BRAVECTO_TABLETS = [
-    {"id": 1, "name": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
-    {"id": 2, "name": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
-    {"id": 3, "name": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
-    {"id": 4, "name": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
-    {"id": 5, "name": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+    {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
+    {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
+    {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
+    {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
+    {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
 ]
 
-# Бравекто капли
 BRAVECTO_DROPS = [
-    {"id": 6, "name": "Бравекто капли 5-10 кг", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
-    {"id": 7, "name": "Бравекто капли 10-20 кг", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
+    {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
+    {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
 ]
 
-# Симпарика
 SIMPARICA = [
-    {"id": 8, "name": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
-    {"id": 9, "name": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
-    {"id": 10, "name": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
-    {"id": 11, "name": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
-    {"id": 12, "name": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
-    {"id": 13, "name": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
+    {"id": 8, "name_ru": "Симпарика 1.3-2.5 кг", "name_en": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
+    {"id": 9, "name_ru": "Симпарика 2.5-5 кг", "name_en": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
+    {"id": 10, "name_ru": "Симпарика 5-10 кг", "name_en": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
+    {"id": 11, "name_ru": "Симпарика 10-20 кг", "name_en": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
+    {"id": 12, "name_ru": "Симпарика 20-40 кг", "name_en": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
+    {"id": 13, "name_ru": "Симпарика 40-60 кг", "name_en": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
 ]
 
-# Симпарика ТРИО
 SIMPARICA_TRIO = [
-    {"id": 14, "name": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
-    {"id": 15, "name": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
-    {"id": 16, "name": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
-    {"id": 17, "name": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
-    {"id": 18, "name": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
-    {"id": 19, "name": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+    {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
+    {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
+    {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
+    {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
+    {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
+    {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
 ]
 
-# Тиксфли
 TIXFLI = [
-    {"id": 20, "name": "Тиксфли 2-4.5 кг", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
-    {"id": 21, "name": "Тиксфли 4.5-10 кг", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
-    {"id": 22, "name": "Тиксфли 10-20 кг", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
-    {"id": 23, "name": "Тиксфли 20-40 кг", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
-    {"id": 24, "name": "Тиксфли 40-56 кг", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
+    {"id": 20, "name_ru": "Тиксфли 2-4.5 кг", "name_en": "Tixfli 2-4.5 kg", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
+    {"id": 21, "name_ru": "Тиксфли 4.5-10 кг", "name_en": "Tixfli 4.5-10 kg", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
+    {"id": 22, "name_ru": "Тиксфли 10-20 кг", "name_en": "Tixfli 10-20 kg", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
+    {"id": 23, "name_ru": "Тиксфли 20-40 кг", "name_en": "Tixfli 20-40 kg", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
+    {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
 ]
 
-# Объединяем все товары в один словарь для быстрого поиска
+# Объединяем все товары в один список
+ALL_PRODUCTS_LIST = BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI
+
+# Словарь для быстрого поиска по ID
 ALL_PRODUCTS = {}
-for item in BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI:
+for item in ALL_PRODUCTS_LIST:
     ALL_PRODUCTS[item["id"]] = item
 
 carts = {}
@@ -90,6 +91,15 @@ def is_admin(user_id):
 
 def get_product(product_id):
     return ALL_PRODUCTS.get(product_id)
+
+def search_products(query):
+    """Поиск товаров по русскому или английскому названию"""
+    query_lower = query.lower().strip()
+    results = []
+    for product in ALL_PRODUCTS_LIST:
+        if query_lower in product["name_ru"].lower() or query_lower in product["name_en"].lower():
+            results.append(product)
+    return results
 
 def update_product_price(product_id, new_price):
     if product_id in ALL_PRODUCTS:
@@ -123,6 +133,7 @@ def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
+        [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
     ])
@@ -212,6 +223,7 @@ def delivery_menu():
 def faq_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
+        [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
@@ -242,6 +254,58 @@ async def admin_panel(message: Message):
         await message.answer("⛔ Нет доступа")
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
+
+# ========== ПОИСК ==========
+@dp.callback_query(F.data == "search")
+async def search_start(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text(
+        "🔍 *ПОИСК ТОВАРОВ*\n\n"
+        "Введите название товара на русском или английском языке.\n\n"
+        "Примеры:\n"
+        "• Бравекто / Bravecto\n"
+        "• Симпарика / Simparica\n"
+        "• Тиксфли / Tixfli\n\n"
+        "🔎 Введите запрос:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(SearchForm.waiting_for_query)
+    await call.answer()
+
+@dp.message(SearchForm.waiting_for_query)
+async def search_products_handler(message: Message, state: FSMContext):
+    query = message.text.strip()
+    
+    if len(query) < 2:
+        await message.answer("❌ Введите минимум 2 символа для поиска")
+        return
+    
+    results = search_products(query)
+    
+    if not results:
+        await message.answer(
+            f"🔍 По запросу *{query}* ничего не найдено.\n\n"
+            f"Попробуйте:\n"
+            f"• Бравекто / Bravecto\n"
+            f"• Симпарика / Simparica\n"
+            f"• Тиксфли / Tixfli",
+            parse_mode="Markdown",
+            reply_markup=faq_menu()
+        )
+        await state.clear()
+        return
+    
+    # Показываем результаты поиска
+    text = f"🔍 *Результаты поиска по запросу:* \"{query}\"\n\n"
+    text += f"📦 Найдено товаров: {len(results)}\n\n"
+    
+    for product in results:
+        text += f"• *{product['name_ru']}* / *{product['name_en']}*\n"
+        text += f"  💰 {product['price']}₽ | 📅 годен до {product['expiry']} | 📦 в наличии: {product['stock']} шт.\n\n"
+    
+    text += "👇 *Для добавления в корзину, перейдите в каталог* 👇"
+    
+    await message.answer(text, parse_mode="Markdown", reply_markup=faq_menu())
+    await state.clear()
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
@@ -303,23 +367,23 @@ async def admin_show_stock(call: CallbackQuery):
     
     text += "🟢 *Бравекто (таблетки)*\n"
     for p in BRAVECTO_TABLETS:
-        text += f"   🆔 ID: {p['id']} - {p['name']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     text += "\n🟢 *Бравекто (капли)*\n"
     for p in BRAVECTO_DROPS:
-        text += f"   🆔 ID: {p['id']} - {p['name']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     text += "\n🟠 *Симпарика*\n"
     for p in SIMPARICA:
-        text += f"   🆔 ID: {p['id']} - {p['name']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     text += "\n🟠 *Симпарика ТРИО*\n"
     for p in SIMPARICA_TRIO:
-        text += f"   🆔 ID: {p['id']} - {p['name']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     text += "\n🔵 *Тиксфли*\n"
     for p in TIXFLI:
-        text += f"   🆔 ID: {p['id']} - {p['name']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
@@ -354,13 +418,13 @@ async def admin_get_product_id(message: Message, state: FSMContext):
         if product:
             await state.update_data(product_id=product_id)
             await message.answer(
-                f"📦 *{product['name']}*\n\n"
+                f"📦 *{product['name_ru']} / {product['name_en']}*\n\n"
                 f"💰 Цена: {product['price']} руб.\n"
                 f"📦 Остаток: {product['stock']} шт.\n"
                 f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
                 f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
                 parse_mode="Markdown",
-                reply_markup=edit_choice_menu(product_id, product['name'])
+                reply_markup=edit_choice_menu(product_id, product['name_ru'])
             )
             await state.clear()
         else:
@@ -379,7 +443,7 @@ async def admin_edit_price(call: CallbackQuery, state: FSMContext):
     if product:
         await state.update_data(product_id=product_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
+            f"📦 *{product['name_ru']} / {product['name_en']}*\n"
             f"💰 Текущая цена: {product['price']} руб.\n\n"
             f"✏️ *ВВЕДИТЕ НОВУЮ ЦЕНУ (только число):*",
             parse_mode="Markdown"
@@ -402,7 +466,7 @@ async def admin_set_new_price(message: Message, state: FSMContext):
         product = get_product(product_id)
         await message.answer(
             f"✅ *ЦЕНА ОБНОВЛЕНА!*\n\n"
-            f"📦 {product['name']}\n"
+            f"📦 {product['name_ru']} / {product['name_en']}\n"
             f"💰 Новая цена: {new_price} руб.",
             parse_mode="Markdown",
             reply_markup=admin_menu()
@@ -422,7 +486,7 @@ async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
     if product:
         await state.update_data(product_id=product_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
+            f"📦 *{product['name_ru']} / {product['name_en']}*\n"
             f"📦 Текущий остаток: {product['stock']} шт.\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):*",
             parse_mode="Markdown"
@@ -445,7 +509,7 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
         product = get_product(product_id)
         await message.answer(
             f"✅ *ОСТАТКИ ОБНОВЛЕНЫ!*\n\n"
-            f"📦 {product['name']}\n"
+            f"📦 {product['name_ru']} / {product['name_en']}\n"
             f"📦 Новый остаток: {new_stock} шт.",
             parse_mode="Markdown",
             reply_markup=admin_menu()
@@ -465,7 +529,7 @@ async def admin_edit_expiry(call: CallbackQuery, state: FSMContext):
     if product:
         await state.update_data(product_id=product_id)
         await call.message.answer(
-            f"📦 *{product['name']}*\n"
+            f"📦 *{product['name_ru']} / {product['name_en']}*\n"
             f"📅 Текущий срок годности: {product.get('expiry', 'Не указан')}\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ СРОК ГОДНОСТИ*\n"
             f"В формате: ММ.ГГГГ\n"
@@ -498,7 +562,7 @@ async def admin_set_new_expiry(message: Message, state: FSMContext):
     
     await message.answer(
         f"✅ *СРОК ГОДНОСТИ ОБНОВЛЁН!*\n\n"
-        f"📦 {product['name']}\n"
+        f"📦 {product['name_ru']} / {product['name_en']}\n"
         f"📅 Новый срок годности: {new_expiry}",
         parse_mode="Markdown",
         reply_markup=admin_menu()
@@ -525,7 +589,7 @@ async def catalog(call: CallbackQuery):
 # ========== ПОКАЗ БРАВЕКТО ТАБЛЕТКИ ==========
 @dp.callback_query(F.data == "show_bravecto_tablets")
 async def show_bravecto_tablets(call: CallbackQuery):
-    text = "*🟢 Бравекто (таблетки)*\n\n"
+    text = "*🟢 Бравекто (таблетки) / Bravecto (tablets)*\n\n"
     text += "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка\n\n"
     text += "*📊 Доступные варианты:*\n"
     
@@ -545,7 +609,7 @@ async def show_bravecto_tablets(call: CallbackQuery):
 # ========== ПОКАЗ БРАВЕКТО КАПЛИ ==========
 @dp.callback_query(F.data == "show_bravecto_drops")
 async def show_bravecto_drops(call: CallbackQuery):
-    text = "*🟢 Бравекто (капли)*\n\n"
+    text = "*🟢 Бравекто (капли) / Bravecto (drops)*\n\n"
     text += "✅ Капли от блох и клещей\n💊 Защита на 12 недель\n\n"
     text += "*📊 Доступные варианты:*\n"
     
@@ -565,7 +629,7 @@ async def show_bravecto_drops(call: CallbackQuery):
 # ========== ПОКАЗ СИМПАРИКА ==========
 @dp.callback_query(F.data == "show_simparica")
 async def show_simparica(call: CallbackQuery):
-    text = "*🟠 Симпарика*\n\n"
+    text = "*🟠 Симпарика / Simparica*\n\n"
     text += "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней\n\n"
     text += "*📊 Доступные варианты:*\n"
     
@@ -585,7 +649,7 @@ async def show_simparica(call: CallbackQuery):
 # ========== ПОКАЗ СИМПАРИКА ТРИО ==========
 @dp.callback_query(F.data == "show_simparica_trio")
 async def show_simparica_trio(call: CallbackQuery):
-    text = "*🟠 Симпарика ТРИО*\n\n"
+    text = "*🟠 Симпарика ТРИО / Simparica TRIO*\n\n"
     text += "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки\n\n"
     text += "*📊 Доступные варианты:*\n"
     
@@ -605,7 +669,7 @@ async def show_simparica_trio(call: CallbackQuery):
 # ========== ПОКАЗ ТИКСФЛИ ==========
 @dp.callback_query(F.data == "show_tixfli")
 async def show_tixfli(call: CallbackQuery):
-    text = "*🔵 Тиксфли*\n\n"
+    text = "*🔵 Тиксфли / Tixfli*\n\n"
     text += "✅ Защита от блох и клещей\n\n"
     text += "*📊 Доступные варианты:*\n"
     
@@ -645,13 +709,13 @@ async def add_to_cart(call: CallbackQuery):
         carts[user_id][product_id]['qty'] += 1
     else:
         carts[user_id][product_id] = {
-            'name': product['name'],
+            'name': product['name_ru'],
             'price': product['price'],
             'qty': 1,
             'expiry': product['expiry']
         }
     
-    await call.answer(f"✅ {product['name']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
+    await call.answer(f"✅ {product['name_ru']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
 
 # ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
@@ -827,7 +891,7 @@ async def main_back(call: CallbackQuery):
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print(f"📦 Загружено товаров: {len(ALL_PRODUCTS)}")
-    print("🆔 Бравекто таблетки: ID 1,2,3,4,5")
+    print("🔍 Поиск работает на русском и английском")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
