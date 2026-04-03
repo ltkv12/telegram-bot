@@ -29,25 +29,26 @@ class OrderForm(StatesGroup):
 class AdminStates(StatesGroup):
     waiting_for_product_id = State()
     waiting_for_new_stock = State()
+    waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ С СРОКОМ ГОДНОСТИ ==========
 PRODUCTS = {
     "antiparasitic": [
-        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5},
-        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 3},
-        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 7},
-        {"id": 4, "name": "Бравекто 20-40 кг", "price": 2850, "desc": "Защита 12 недель\nДля собак 20-40 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 2},
-        {"id": 5, "name": "Бравекто 40-56 кг", "price": 3250, "desc": "Защита 12 недель\nДля собак 40-56 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 4},
-        {"id": 6, "name": "Нексгард 4-10 кг", "price": 1950, "desc": "Защита 1 месяц\nДля собак 4-10 кг\n3 таблетки", "photo": "https://i.imgur.com/LpQxE6k.jpg", "stock": 8},
-        {"id": 7, "name": "Симпарика 5-10 кг", "price": 1850, "desc": "Защита 1 месяц\nДля собак 5-10 кг\n3 таблетки", "photo": "https://i.imgur.com/WK9qP5c.jpg", "stock": 6},
+        {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5, "expiry": "12.2026"},
+        {"id": 2, "name": "Бравекто 4.5-10 кг", "price": 2150, "desc": "Защита 12 недель\nДля собак 4.5-10 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 3, "expiry": "12.2026"},
+        {"id": 3, "name": "Бравекто 10-20 кг", "price": 2450, "desc": "Защита 12 недель\nДля собак 10-20 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 7, "expiry": "12.2026"},
+        {"id": 4, "name": "Бравекто 20-40 кг", "price": 2850, "desc": "Защита 12 недель\nДля собак 20-40 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 2, "expiry": "12.2026"},
+        {"id": 5, "name": "Бравекто 40-56 кг", "price": 3250, "desc": "Защита 12 недель\nДля собак 40-56 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 4, "expiry": "12.2026"},
+        {"id": 6, "name": "Нексгард 4-10 кг", "price": 1950, "desc": "Защита 1 месяц\nДля собак 4-10 кг\n3 таблетки", "photo": "https://i.imgur.com/LpQxE6k.jpg", "stock": 8, "expiry": "10.2026"},
+        {"id": 7, "name": "Симпарика 5-10 кг", "price": 1850, "desc": "Защита 1 месяц\nДля собак 5-10 кг\n3 таблетки", "photo": "https://i.imgur.com/WK9qP5c.jpg", "stock": 6, "expiry": "10.2026"},
     ],
     "medicine": [
-        {"id": 8, "name": "Стоп-зуд", "price": 890, "desc": "Антигистаминный\nОт аллергического зуда\n20 таблеток", "photo": "https://i.imgur.com/8Qk3lB.jpg", "stock": 10},
-        {"id": 9, "name": "Энтеросгель", "price": 450, "desc": "Энтеросорбент\nПри отравлениях\n225 г", "photo": "https://i.imgur.com/9Qk3lB.jpg", "stock": 15},
+        {"id": 8, "name": "Стоп-зуд", "price": 890, "desc": "Антигистаминный\nОт аллергического зуда\n20 таблеток", "photo": "https://i.imgur.com/8Qk3lB.jpg", "stock": 10, "expiry": "08.2027"},
+        {"id": 9, "name": "Энтеросгель", "price": 450, "desc": "Энтеросорбент\nПри отравлениях\n225 г", "photo": "https://i.imgur.com/9Qk3lB.jpg", "stock": 15, "expiry": "05.2027"},
     ],
     "vitamins": [
-        {"id": 10, "name": "Глюкозамин", "price": 1250, "desc": "Для суставов\nДля крупных пород\n90 таблеток", "photo": "https://i.imgur.com/glucosamine.jpg", "stock": 12},
-        {"id": 11, "name": "Омега-3", "price": 980, "desc": "Для шерсти\nУлучшает состояние\n60 капсул", "photo": "https://i.imgur.com/omega3.jpg", "stock": 20},
+        {"id": 10, "name": "Глюкозамин", "price": 1250, "desc": "Для суставов\nДля крупных пород\n90 таблеток", "photo": "https://i.imgur.com/glucosamine.jpg", "stock": 12, "expiry": "03.2027"},
+        {"id": 11, "name": "Омега-3", "price": 980, "desc": "Для шерсти\nУлучшает состояние\n60 капсул", "photo": "https://i.imgur.com/omega3.jpg", "stock": 20, "expiry": "03.2027"},
     ],
 }
 
@@ -63,11 +64,13 @@ def get_product_stock(product_id):
                 return p['stock']
     return 0
 
-def update_product_stock(product_id, new_stock):
+def update_product_stock(product_id, new_stock, new_expiry=None):
     for cat in PRODUCTS.values():
         for p in cat:
             if p['id'] == product_id:
                 p['stock'] = new_stock
+                if new_expiry:
+                    p['expiry'] = new_expiry
                 return True
     return False
 
@@ -92,6 +95,7 @@ def validate_phone(phone):
 # ========== КЛАВИАТУРЫ ==========
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
@@ -143,6 +147,12 @@ def delivery_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
+def faq_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+    ])
+
 # ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
@@ -160,10 +170,6 @@ async def start(message: Message):
 
 ✅ *VetProfil — надёжный партнёр в ветеринарии*
 
-🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
-
-💡 Отправления Яндекс, Озон или СДЭК.
-
 👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
     
     await message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
@@ -175,6 +181,60 @@ async def admin_panel(message: Message):
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ", reply_markup=admin_menu())
 
+# ========== ЧАСТЫЕ ВОПРОСЫ ==========
+@dp.callback_query(F.data == "faq")
+async def faq(call: CallbackQuery):
+    faq_text = """❓ *ЧАСТЫЕ ВОПРОСЫ*
+
+📍 *Самовывоз*
+Самовывоз возможен в Москве в районе ВАО (адрес уточняйте после согласования заказа и времени самовывоза). Оплата наличными.
+
+📩 *Доставка в другие регионы*
+Осуществляется в пункты выдачи заказов (ПВЗ) Яндекс/СДЭК/Озон
+
+💰 *Оплата*
+100% перед отправкой, на юр счёт, через безопасную сделку Озон или СДЭК "наложка"
+
+🗣 *Доставка оплачивается отдельно*
+• СДЭК - при получении
+• Яндекс - вместе с заказом
+
+Стоимость доставки рассчитывается согласно тарифам транспортной компании.
+
+📍 *Рассчитать стоимость:*
+• СДЭК: https://www.cdek.ru/ru/cabinet/calculate/
+• Яндекс: в приложении Яндекс Go
+
+⭕️ *Риски*
+
+🗣 *Доставка Яндекс*
+Дешевле, но последнее время они стали часто терять посылки. В случае утери выяснение информации - ваша зона ответственности. Отсутствие упаковки - посылки часто доезжают с повреждениями.
+
+🗣 *Доставка СДЭК*
+Дороже, но все посылки застрахованы. В случае утери транспортная компания компенсирует убытки. Упаковка надежнее, даже для маленьких отправлений предоставляют коробки.
+
+🗣 *Наложка*
+Для тех, кто боится платить сразу - у СДЭК доступна услуга "наложка" (https://nalozhka.cdek.ru/). Комиссия 5%, доставка выходит дороже.
+
+🚚 *Отправление заказов происходит ежедневно*
+
+⏰ *Обработка заказов*
+С 9:00 до 16:00 (по московскому времени)
+
+📌 *ОФОРМЛЕНИЕ ЗАКАЗА*
+
+🗣 Для быстрого оформления заказа используйте бот:
+
+1️⃣ Название препарата/количество
+2️⃣ Город и адрес ПВЗ (с указанием транспортной компании)
+3️⃣ ФИО
+4️⃣ Телефон
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await call.message.edit_text(faq_text, parse_mode="Markdown", reply_markup=faq_menu())
+    await call.answer()
+
 # ========== АДМИН ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
@@ -182,9 +242,12 @@ async def admin_show_stock(call: CallbackQuery):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
-    text = "📊 ОСТАТКИ:\n\n"
+    text = "📊 ОСТАТКИ И СРОКИ ГОДНОСТИ:\n\n"
     for p in products:
-        text += f"ID {p['id']} - {p['name']}\n   📦 {p['stock']} шт.\n\n"
+        text += f"🆔 ID: {p['id']}\n"
+        text += f"📦 {p['name']}\n"
+        text += f"   📦 Остаток: {p['stock']} шт.\n"
+        text += f"   📅 Срок годности: {p.get('expiry', 'Не указан')}\n\n"
     await call.message.answer(text, reply_markup=admin_menu())
     await call.message.delete()
     await call.answer()
@@ -197,7 +260,7 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
     products = get_all_products()
     text = "✏️ ВВЕДИТЕ ID ТОВАРА:\n\n"
     for p in products:
-        text += f"ID {p['id']} - {p['name']} (остаток: {p['stock']})\n"
+        text += f"🆔 ID: {p['id']} - {p['name']} (остаток: {p['stock']}, годен до: {p.get('expiry', '?')})\n"
     await call.message.answer(text)
     await call.message.delete()
     await state.set_state(AdminStates.waiting_for_product_id)
@@ -216,7 +279,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
                 break
         if product:
             await state.update_data(product_id=product_id)
-            await message.answer(f"📦 {product['name']}\nТекущий остаток: {product['stock']} шт.\n\nВВЕДИТЕ НОВЫЙ ОСТАТОК:")
+            await message.answer(f"📦 {product['name']}\n📊 Текущий остаток: {product['stock']} шт.\n📅 Текущий срок годности: {product.get('expiry', 'Не указан')}\n\n✏️ ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):")
             await state.set_state(AdminStates.waiting_for_new_stock)
         else:
             await message.answer("❌ Товар не найден")
@@ -232,10 +295,38 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
         data = await state.get_data()
         product_id = data['product_id']
         update_product_stock(product_id, new_stock)
-        await message.answer(f"✅ ОБНОВЛЕНО!\nID {product_id}\nНовый остаток: {new_stock} шт.", reply_markup=admin_menu())
-        await state.clear()
+        await message.answer(f"✅ ОСТАТКИ ОБНОВЛЕНЫ!\n🆔 ID: {product_id}\n📦 Новый остаток: {new_stock} шт.\n\n✏️ ТЕПЕРЬ ВВЕДИТЕ НОВЫЙ СРОК ГОДНОСТИ\n(в формате ММ.ГГГГ, например: 12.2026)\n\nЕсли не хотите менять, введите 'нет'")
+        await state.set_state(AdminStates.waiting_for_new_expiry)
     except ValueError:
         await message.answer("❌ Введите число")
+
+@dp.message(AdminStates.waiting_for_new_expiry)
+async def admin_set_new_expiry(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+    
+    new_expiry = message.text.strip()
+    
+    if new_expiry.lower() == "нет":
+        await message.answer("✅ Срок годности не изменён!", reply_markup=admin_menu())
+        await state.clear()
+        return
+    
+    if not re.match(r'^(0[1-9]|1[0-2])\.(20[2-9][0-9])$', new_expiry):
+        await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ!\n\nВведите дату в формате ММ.ГГГГ\nНапример: 12.2026\n\nИли введите 'нет' чтобы пропустить")
+        return
+    
+    data = await state.get_data()
+    product_id = data['product_id']
+    
+    for cat in PRODUCTS.values():
+        for p in cat:
+            if p['id'] == product_id:
+                p['expiry'] = new_expiry
+                break
+    
+    await message.answer(f"✅ СРОК ГОДНОСТИ ОБНОВЛЁН!\n🆔 ID: {product_id}\n📅 Новый срок годности: {new_expiry}", reply_markup=admin_menu())
+    await state.clear()
 
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
@@ -257,13 +348,27 @@ async def show_products(call: CallbackQuery):
     await call.message.answer("📦 ТОВАРЫ:")
     await call.message.delete()
     
+    is_admin_user = is_admin(call.from_user.id)
+    
     for product in products:
         stock = product['stock']
-        text = f"{product['name']}\n\n{product['desc']}\n\n💰 {product['price']} руб."
+        expiry = product.get('expiry', 'Не указан')
+        
+        text = f"*{product['name']}*\n\n"
+        text += f"{product['desc']}\n\n"
+        text += f"💰 *Цена: {product['price']} руб.*\n"
+        text += f"📅 *Срок годности:* {expiry}\n"
+        
+        if is_admin_user:
+            if stock > 0:
+                text += f"📦 *В наличии: {stock} шт.*"
+            else:
+                text += f"❌ *НЕТ В НАЛИЧИИ*"
+        
         try:
-            await call.message.answer_photo(photo=product['photo'], caption=text, reply_markup=product_buttons(product['id'], stock))
+            await call.message.answer_photo(photo=product['photo'], caption=text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
         except:
-            await call.message.answer(text, reply_markup=product_buttons(product['id'], stock))
+            await call.message.answer(text, parse_mode="Markdown", reply_markup=product_buttons(product['id'], stock))
     await call.answer()
 
 @dp.callback_query(F.data.startswith("add_"))
@@ -372,7 +477,6 @@ async def get_phone(message: Message, state: FSMContext):
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
-    # Преобразуем samovyvoz в читаемый вид
     if service == "samovyvoz":
         service = "САМОВЫВОЗ"
     await state.update_data(delivery=service)
@@ -394,6 +498,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
         await state.clear()
         return
     
+    # Проверяем остатки
     for product_id, item in cart.items():
         current_stock = get_product_stock(int(product_id))
         if item['qty'] > current_stock:
@@ -401,12 +506,14 @@ async def get_pickup_point(message: Message, state: FSMContext):
             await state.clear()
             return
     
+    # Уменьшаем остатки
     for product_id, item in cart.items():
         decrease_stock(int(product_id), item['qty'])
     
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
     
+    # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
     order_text += f"🔹 Username: @{username}\n"
@@ -422,11 +529,13 @@ async def get_pickup_point(message: Message, state: FSMContext):
     order_text += f"\n💰 ИТОГО: {total} руб.\n"
     order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
     
+    # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка: {e}")
     
+    # Очищаем корзину
     carts[user_id] = {}
     await state.clear()
     
@@ -459,10 +568,6 @@ async def main_back(call: CallbackQuery):
 ❤️ *Для тех, кто заботится о своих питомцах осознанно* 
 
 ✅ *VetProfil — надёжный партнёр в ветеринарии*
-
-🚘 В Москве, по согласованию, возможен самовывоз (м. Первомайская, оплата наличными). 
-
-💡 Отправления Яндекс, Озон или СДЭК.
 
 👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
     
