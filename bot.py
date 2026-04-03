@@ -33,38 +33,55 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ (ВСЕ ВАРИАНТЫ С ID) ==========
-ALL_VARIANTS = {
-    # Бравекто таблетки (английские названия) - ID 1-5
-    1: {"id": 1, "name": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "product_name": "Бравекто (таблетки)", "group": "bravecto_tablets"},
-    2: {"id": 2, "name": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "product_name": "Бравекто (таблетки)", "group": "bravecto_tablets"},
-    3: {"id": 3, "name": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "product_name": "Бравекто (таблетки)", "group": "bravecto_tablets"},
-    4: {"id": 4, "name": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "product_name": "Бравекто (таблетки)", "group": "bravecto_tablets"},
-    5: {"id": 5, "name": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "product_name": "Бравекто (таблетки)", "group": "bravecto_tablets"},
-    # Бравекто капли - ID 6-7
-    6: {"id": 6, "name": "Бравекто капли 5-10 кг", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "product_name": "Бравекто (капли)", "group": "bravecto_drops"},
-    7: {"id": 7, "name": "Бравекто капли 10-20 кг", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "product_name": "Бравекто (капли)", "group": "bravecto_drops"},
-    # Симпарика - ID 8-13
-    8: {"id": 8, "name": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8, "product_name": "Симпарика", "group": "simparica"},
-    9: {"id": 9, "name": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10, "product_name": "Симпарика", "group": "simparica"},
-    10: {"id": 10, "name": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12, "product_name": "Симпарика", "group": "simparica"},
-    11: {"id": 11, "name": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9, "product_name": "Симпарика", "group": "simparica"},
-    12: {"id": 12, "name": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7, "product_name": "Симпарика", "group": "simparica"},
-    13: {"id": 13, "name": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5, "product_name": "Симпарика", "group": "simparica"},
-    # Симпарика ТРИО - ID 14-19
-    14: {"id": 14, "name": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    15: {"id": 15, "name": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    16: {"id": 16, "name": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    17: {"id": 17, "name": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    18: {"id": 18, "name": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    19: {"id": 19, "name": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "product_name": "Симпарика ТРИО", "group": "simparica_trio"},
-    # Тиксфли - ID 20-24
-    20: {"id": 20, "name": "Тиксфли 2-4.5 кг", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15, "product_name": "Тиксфли", "group": "tixfli"},
-    21: {"id": 21, "name": "Тиксфли 4.5-10 кг", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12, "product_name": "Тиксфли", "group": "tixfli"},
-    22: {"id": 22, "name": "Тиксфли 10-20 кг", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10, "product_name": "Тиксфли", "group": "tixfli"},
-    23: {"id": 23, "name": "Тиксфли 20-40 кг", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8, "product_name": "Тиксфли", "group": "tixfli"},
-    24: {"id": 24, "name": "Тиксфли 40-56 кг", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "product_name": "Тиксфли", "group": "tixfli"},
-}
+# ========== ТОВАРЫ (ПРЯМОЕ ОПРЕДЕЛЕНИЕ) ==========
+# Бравекто таблетки
+BRAVECTO_TABLETS = [
+    {"id": 1, "name": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
+    {"id": 2, "name": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
+    {"id": 3, "name": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
+    {"id": 4, "name": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
+    {"id": 5, "name": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+]
+
+# Бравекто капли
+BRAVECTO_DROPS = [
+    {"id": 6, "name": "Бравекто капли 5-10 кг", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
+    {"id": 7, "name": "Бравекто капли 10-20 кг", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
+]
+
+# Симпарика
+SIMPARICA = [
+    {"id": 8, "name": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
+    {"id": 9, "name": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
+    {"id": 10, "name": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
+    {"id": 11, "name": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
+    {"id": 12, "name": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
+    {"id": 13, "name": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
+]
+
+# Симпарика ТРИО
+SIMPARICA_TRIO = [
+    {"id": 14, "name": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
+    {"id": 15, "name": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
+    {"id": 16, "name": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
+    {"id": 17, "name": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
+    {"id": 18, "name": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
+    {"id": 19, "name": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+]
+
+# Тиксфли
+TIXFLI = [
+    {"id": 20, "name": "Тиксфли 2-4.5 кг", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
+    {"id": 21, "name": "Тиксфли 4.5-10 кг", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
+    {"id": 22, "name": "Тиксфли 10-20 кг", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
+    {"id": 23, "name": "Тиксфли 20-40 кг", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
+    {"id": 24, "name": "Тиксфли 40-56 кг", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
+]
+
+# ОБЩИЙ СЛОВАРЬ ВСЕХ ТОВАРОВ
+ALL_VARIANTS = {}
+for item in BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI:
+    ALL_VARIANTS[item["id"]] = item
 
 # ГРУППЫ ТОВАРОВ ДЛЯ КАТАЛОГА
 PRODUCT_GROUPS = {
@@ -72,31 +89,31 @@ PRODUCT_GROUPS = {
         "name": "🟢 Бравекто (таблетки)",
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
-        "variants": [1, 2, 3, 4, 5]
+        "variants": BRAVECTO_TABLETS
     },
     "bravecto_drops": {
         "name": "🟢 Бравекто (капли)",
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
-        "variants": [6, 7]
+        "variants": BRAVECTO_DROPS
     },
     "simparica": {
         "name": "🟠 Симпарика",
         "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
-        "variants": [8, 9, 10, 11, 12, 13]
+        "variants": SIMPARICA
     },
     "simparica_trio": {
         "name": "🟠 Симпарика ТРИО",
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
-        "variants": [14, 15, 16, 17, 18, 19]
+        "variants": SIMPARICA_TRIO
     },
     "tixfli": {
         "name": "🔵 Тиксфли",
         "desc": "✅ Защита от блох и клещей",
         "photo": "https://i.imgur.com/8Qk3lB.jpg",
-        "variants": [20, 21, 22, 23, 24]
+        "variants": TIXFLI
     }
 }
 
@@ -178,14 +195,12 @@ def catalog_menu():
     buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def variant_buttons(variant_ids):
+def variant_buttons(variants):
     buttons = []
-    for vid in variant_ids:
-        variant = get_variant(vid)
-        if variant:
-            weight = variant['weight']
-            price = variant['price']
-            buttons.append([InlineKeyboardButton(text=f"📦 {weight} - {price}₽", callback_data=f"add_{vid}")])
+    for variant in variants:
+        weight = variant['weight']
+        price = variant['price']
+        buttons.append([InlineKeyboardButton(text=f"📦 {weight} - {price}₽", callback_data=f"add_{variant['id']}")])
     buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
     buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -514,10 +529,8 @@ async def show_product(call: CallbackQuery):
     text += f"{product_group['desc']}\n\n"
     text += "*📊 Доступные варианты:*\n"
     
-    for vid in product_group['variants']:
-        variant = get_variant(vid)
-        if variant:
-            text += f"• {variant['name']} - {variant['price']}₽ (годен до {variant['expiry']})\n"
+    for variant in product_group['variants']:
+        text += f"• {variant['name']} - {variant['price']}₽ (годен до {variant['expiry']})\n"
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
@@ -544,7 +557,7 @@ async def add_to_cart(call: CallbackQuery):
     variant = get_variant(variant_id)
     
     if not variant:
-        await call.answer("❌ Товар не найден", show_alert=True)
+        await call.answer(f"❌ Товар с ID {variant_id} не найден", show_alert=True)
         return
     
     user_id = call.from_user.id
@@ -742,7 +755,7 @@ async def main_back(call: CallbackQuery):
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print(f"📦 Загружено товаров: {len(get_all_variants())}")
-    print("🆔 ID товаров Бравекто таблетки: 1,2,3,4,5")
+    print("🆔 ID Бравекто таблетки: 1,2,3,4,5")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
