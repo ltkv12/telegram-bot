@@ -28,7 +28,7 @@ class OrderForm(StatesGroup):
 
 class AdminStates(StatesGroup):
     waiting_for_product_id = State()
-    waiting_for_edit_choice = State()  # Что будем менять: цену, остатки или срок
+    waiting_for_edit_choice = State()
     waiting_for_new_price = State()
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
@@ -123,7 +123,7 @@ def admin_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-def edit_choice_menu(product_id, product_name):
+def edit_choice_menu(product_id):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💰 ИЗМЕНИТЬ ЦЕНУ", callback_data=f"edit_price_{product_id}")],
         [InlineKeyboardButton(text="📦 ИЗМЕНИТЬ ОСТАТКИ", callback_data=f"edit_stock_{product_id}")],
@@ -174,11 +174,6 @@ def faq_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
-    ])
-
-def admin_back_menu():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="◀️ НАЗАД В АДМИН-ПАНЕЛЬ", callback_data="admin_back")]
     ])
 
 # ========== ПРИВЕТСТВИЕ ==========
@@ -240,7 +235,7 @@ async def faq(call: CallbackQuery):
 Дороже, но все посылки застрахованы. Упаковка надежнее.
 
 🗣 *Наложка*
-У СДЭК доступна услуга "наложка" (https://nalozhka.cdek.ru/). Комиссия 5%.
+У СДЭК доступна услуга "наложка". Комиссия 5%.
 
 🚚 *Отправление заказов происходит ежедневно*
 
@@ -307,7 +302,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
                 f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
                 f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
                 parse_mode="Markdown",
-                reply_markup=edit_choice_menu(product_id, product['name'])
+                reply_markup=edit_choice_menu(product_id)
             )
             await state.clear()
         else:
@@ -429,7 +424,6 @@ async def admin_set_new_expiry(message: Message, state: FSMContext):
     
     new_expiry = message.text.strip()
     
-    # Проверяем формат ММ.ГГГГ
     if not re.match(r'^(0[1-9]|1[0-2])\.(20[2-9][0-9])$', new_expiry):
         await message.answer(
             "❌ *НЕВЕРНЫЙ ФОРМАТ!*\n\n"
@@ -646,4 +640,68 @@ async def get_pickup_point(message: Message, state: FSMContext):
     # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
-    order_text += f
+    order_text += f"🔹 Username: @{username}\n"
+    order_text += f"📱 Телефон: {data['phone']}\n"
+    order_text += f"🆔 ID: {user_id}\n"
+    order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
+    order_text += f"🏠 Пункт выдачи: {message.text}\n\n"
+    order_text += f"📦 ТОВАРЫ:\n"
+    
+    for item in cart.values():
+        order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
+    
+    order_text += f"\n💰 ИТОГО: {total} руб.\n"
+    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
+    
+    # Отправляем заказ в чат
+    try:
+        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    
+    # Очищаем корзину
+    carts[user_id] = {}
+    await state.clear()
+    
+    await message.answer(
+        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
+        f"👤 {data['fullname']}\n"
+        f"🔹 @{username}\n"
+        f"📱 {data['phone']}\n"
+        f"🚚 {data['delivery'].upper()}\n"
+        f"🏠 {message.text}\n"
+        f"💰 {total} руб.\n\n"
+        f"В ближайшее время с Вами свяжутся для согласования заказа.\n\n"
+        f"🐕 Спасибо за покупку!\n\n"
+        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
+        reply_markup=main_menu()
+    )
+
+@dp.callback_query(F.data == "main_back")
+async def main_back(call: CallbackQuery):
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await call.message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
+    await call.message.delete()
+    await call.answer()
+
+async def main():
+    print("🚀 Бот VetProfil запущен!")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
