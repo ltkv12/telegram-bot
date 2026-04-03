@@ -28,10 +28,12 @@ class OrderForm(StatesGroup):
 
 class AdminStates(StatesGroup):
     waiting_for_product_id = State()
+    waiting_for_edit_choice = State()  # Что будем менять: цену, остатки или срок
+    waiting_for_new_price = State()
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ С СРОКОМ ГОДНОСТИ ==========
+# ========== ТОВАРЫ ==========
 PRODUCTS = {
     "antiparasitic": [
         {"id": 1, "name": "Бравекто 2-4.5 кг", "price": 1850, "desc": "Защита 12 недель\nДля собак 2-4.5 кг", "photo": "https://i.imgur.com/5Q8k3lB.jpg", "stock": 5, "expiry": "12.2026"},
@@ -57,30 +59,43 @@ carts = {}
 def is_admin(user_id):
     return user_id in ADMINS_IDS
 
-def get_product_stock(product_id):
+def get_product(product_id):
     for cat in PRODUCTS.values():
         for p in cat:
             if p['id'] == product_id:
-                return p['stock']
-    return 0
+                return p
+    return None
 
-def update_product_stock(product_id, new_stock, new_expiry=None):
-    for cat in PRODUCTS.values():
-        for p in cat:
-            if p['id'] == product_id:
-                p['stock'] = new_stock
-                if new_expiry:
-                    p['expiry'] = new_expiry
-                return True
+def get_product_stock(product_id):
+    product = get_product(product_id)
+    return product['stock'] if product else 0
+
+def update_product_price(product_id, new_price):
+    product = get_product(product_id)
+    if product:
+        product['price'] = new_price
+        return True
+    return False
+
+def update_product_stock(product_id, new_stock):
+    product = get_product(product_id)
+    if product:
+        product['stock'] = new_stock
+        return True
+    return False
+
+def update_product_expiry(product_id, new_expiry):
+    product = get_product(product_id)
+    if product:
+        product['expiry'] = new_expiry
+        return True
     return False
 
 def decrease_stock(product_id, quantity):
-    for cat in PRODUCTS.values():
-        for p in cat:
-            if p['id'] == product_id:
-                if p['stock'] >= quantity:
-                    p['stock'] -= quantity
-                    return True
+    product = get_product(product_id)
+    if product and product['stock'] >= quantity:
+        product['stock'] -= quantity
+        return True
     return False
 
 def get_all_products():
@@ -103,9 +118,17 @@ def main_menu():
 
 def admin_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📊 ОСТАТКИ", callback_data="admin_stock")],
-        [InlineKeyboardButton(text="✏️ ИЗМЕНИТЬ", callback_data="admin_edit_stock")],
+        [InlineKeyboardButton(text="📊 ВСЕ ТОВАРЫ", callback_data="admin_stock")],
+        [InlineKeyboardButton(text="✏️ ИЗМЕНИТЬ ТОВАР", callback_data="admin_edit_stock")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+    ])
+
+def edit_choice_menu(product_id, product_name):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💰 ИЗМЕНИТЬ ЦЕНУ", callback_data=f"edit_price_{product_id}")],
+        [InlineKeyboardButton(text="📦 ИЗМЕНИТЬ ОСТАТКИ", callback_data=f"edit_stock_{product_id}")],
+        [InlineKeyboardButton(text="📅 ИЗМЕНИТЬ СРОК ГОДНОСТИ", callback_data=f"edit_expiry_{product_id}")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="admin_back")]
     ])
 
 def categories_menu():
@@ -153,6 +176,11 @@ def faq_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
+def admin_back_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="◀️ НАЗАД В АДМИН-ПАНЕЛЬ", callback_data="admin_back")]
+    ])
+
 # ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
@@ -179,7 +207,7 @@ async def admin_panel(message: Message):
     if not is_admin(message.from_user.id):
         await message.answer("⛔ Нет доступа")
         return
-    await message.answer("🔧 АДМИН-ПАНЕЛЬ", reply_markup=admin_menu())
+    await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
@@ -199,8 +227,6 @@ async def faq(call: CallbackQuery):
 • СДЭК - при получении
 • Яндекс - вместе с заказом
 
-Стоимость доставки рассчитывается согласно тарифам транспортной компании.
-
 📍 *Рассчитать стоимость:*
 • СДЭК: https://www.cdek.ru/ru/cabinet/calculate/
 • Яндекс: в приложении Яндекс Go
@@ -208,22 +234,19 @@ async def faq(call: CallbackQuery):
 ⭕️ *Риски*
 
 🗣 *Доставка Яндекс*
-Дешевле, но последнее время они стали часто терять посылки. В случае утери выяснение информации - ваша зона ответственности. Отсутствие упаковки - посылки часто доезжают с повреждениями.
+Дешевле, но последнее время стали часто терять посылки. В случае утери выяснение информации - ваша зона ответственности.
 
 🗣 *Доставка СДЭК*
-Дороже, но все посылки застрахованы. В случае утери транспортная компания компенсирует убытки. Упаковка надежнее, даже для маленьких отправлений предоставляют коробки.
+Дороже, но все посылки застрахованы. Упаковка надежнее.
 
 🗣 *Наложка*
-Для тех, кто боится платить сразу - у СДЭК доступна услуга "наложка" (https://nalozhka.cdek.ru/). Комиссия 5%, доставка выходит дороже.
+У СДЭК доступна услуга "наложка" (https://nalozhka.cdek.ru/). Комиссия 5%.
 
 🚚 *Отправление заказов происходит ежедневно*
 
-⏰ *Обработка заказов*
-С 9:00 до 16:00 (по московскому времени)
+⏰ *Обработка заказов: с 9:00 до 16:00 (МСК)*
 
 📌 *ОФОРМЛЕНИЕ ЗАКАЗА*
-
-🗣 Для быстрого оформления заказа используйте бот:
 
 1️⃣ Название препарата/количество
 2️⃣ Город и адрес ПВЗ (с указанием транспортной компании)
@@ -235,33 +258,35 @@ async def faq(call: CallbackQuery):
     await call.message.edit_text(faq_text, parse_mode="Markdown", reply_markup=faq_menu())
     await call.answer()
 
-# ========== АДМИН ==========
+# ========== АДМИН: ПРОСМОТР ТОВАРОВ ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
-    text = "📊 ОСТАТКИ И СРОКИ ГОДНОСТИ:\n\n"
+    text = "📊 *ВСЕ ТОВАРЫ:*\n\n"
     for p in products:
         text += f"🆔 ID: {p['id']}\n"
-        text += f"📦 {p['name']}\n"
+        text += f"📦 *{p['name']}*\n"
+        text += f"   💰 Цена: {p['price']} руб.\n"
         text += f"   📦 Остаток: {p['stock']} шт.\n"
         text += f"   📅 Срок годности: {p.get('expiry', 'Не указан')}\n\n"
-    await call.message.answer(text, reply_markup=admin_menu())
+    await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
     await call.answer()
 
+# ========== АДМИН: ВЫБОР ТОВАРА ДЛЯ ИЗМЕНЕНИЯ ==========
 @dp.callback_query(F.data == "admin_edit_stock")
 async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
         await call.answer("⛔ Нет доступа")
         return
     products = get_all_products()
-    text = "✏️ ВВЕДИТЕ ID ТОВАРА:\n\n"
+    text = "✏️ *ВВЕДИТЕ ID ТОВАРА ДЛЯ РЕДАКТИРОВАНИЯ:*\n\n"
     for p in products:
-        text += f"🆔 ID: {p['id']} - {p['name']} (остаток: {p['stock']}, годен до: {p.get('expiry', '?')})\n"
-    await call.message.answer(text)
+        text += f"🆔 ID: {p['id']} - {p['name']}\n"
+    await call.message.answer(text, parse_mode="Markdown")
     await call.message.delete()
     await state.set_state(AdminStates.waiting_for_product_id)
     await call.answer()
@@ -272,19 +297,85 @@ async def admin_get_product_id(message: Message, state: FSMContext):
         return
     try:
         product_id = int(message.text)
-        product = None
-        for p in get_all_products():
-            if p['id'] == product_id:
-                product = p
-                break
+        product = get_product(product_id)
         if product:
             await state.update_data(product_id=product_id)
-            await message.answer(f"📦 {product['name']}\n📊 Текущий остаток: {product['stock']} шт.\n📅 Текущий срок годности: {product.get('expiry', 'Не указан')}\n\n✏️ ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):")
-            await state.set_state(AdminStates.waiting_for_new_stock)
+            await message.answer(
+                f"📦 *{product['name']}*\n\n"
+                f"💰 Цена: {product['price']} руб.\n"
+                f"📦 Остаток: {product['stock']} шт.\n"
+                f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
+                f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
+                parse_mode="Markdown",
+                reply_markup=edit_choice_menu(product_id, product['name'])
+            )
+            await state.clear()
         else:
-            await message.answer("❌ Товар не найден")
+            await message.answer("❌ Товар не найден. Попробуйте еще раз:")
     except ValueError:
-        await message.answer("❌ Введите число")
+        await message.answer("❌ Введите число (ID товара)")
+
+# ========== АДМИН: ИЗМЕНЕНИЕ ЦЕНЫ ==========
+@dp.callback_query(F.data.startswith("edit_price_"))
+async def admin_edit_price(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("⛔ Нет доступа")
+        return
+    product_id = int(call.data.split("_")[2])
+    product = get_product(product_id)
+    if product:
+        await state.update_data(product_id=product_id)
+        await call.message.answer(
+            f"📦 *{product['name']}*\n"
+            f"💰 Текущая цена: {product['price']} руб.\n\n"
+            f"✏️ *ВВЕДИТЕ НОВУЮ ЦЕНУ (только число):*",
+            parse_mode="Markdown"
+        )
+        await state.set_state(AdminStates.waiting_for_new_price)
+    await call.answer()
+
+@dp.message(AdminStates.waiting_for_new_price)
+async def admin_set_new_price(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+    try:
+        new_price = int(message.text)
+        if new_price <= 0:
+            await message.answer("❌ Цена должна быть больше 0!")
+            return
+        data = await state.get_data()
+        product_id = data['product_id']
+        update_product_price(product_id, new_price)
+        product = get_product(product_id)
+        await message.answer(
+            f"✅ *ЦЕНА ОБНОВЛЕНА!*\n\n"
+            f"📦 {product['name']}\n"
+            f"💰 Новая цена: {new_price} руб.",
+            parse_mode="Markdown",
+            reply_markup=admin_menu()
+        )
+        await state.clear()
+    except ValueError:
+        await message.answer("❌ Введите число (цену в рублях)")
+
+# ========== АДМИН: ИЗМЕНЕНИЕ ОСТАТКОВ ==========
+@dp.callback_query(F.data.startswith("edit_stock_"))
+async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("⛔ Нет доступа")
+        return
+    product_id = int(call.data.split("_")[2])
+    product = get_product(product_id)
+    if product:
+        await state.update_data(product_id=product_id)
+        await call.message.answer(
+            f"📦 *{product['name']}*\n"
+            f"📦 Текущий остаток: {product['stock']} шт.\n\n"
+            f"✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):*",
+            parse_mode="Markdown"
+        )
+        await state.set_state(AdminStates.waiting_for_new_stock)
+    await call.answer()
 
 @dp.message(AdminStates.waiting_for_new_stock)
 async def admin_set_new_stock(message: Message, state: FSMContext):
@@ -292,13 +383,44 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
         return
     try:
         new_stock = int(message.text)
+        if new_stock < 0:
+            await message.answer("❌ Остаток не может быть отрицательным!")
+            return
         data = await state.get_data()
         product_id = data['product_id']
         update_product_stock(product_id, new_stock)
-        await message.answer(f"✅ ОСТАТКИ ОБНОВЛЕНЫ!\n🆔 ID: {product_id}\n📦 Новый остаток: {new_stock} шт.\n\n✏️ ТЕПЕРЬ ВВЕДИТЕ НОВЫЙ СРОК ГОДНОСТИ\n(в формате ММ.ГГГГ, например: 12.2026)\n\nЕсли не хотите менять, введите 'нет'")
-        await state.set_state(AdminStates.waiting_for_new_expiry)
+        product = get_product(product_id)
+        await message.answer(
+            f"✅ *ОСТАТКИ ОБНОВЛЕНЫ!*\n\n"
+            f"📦 {product['name']}\n"
+            f"📦 Новый остаток: {new_stock} шт.",
+            parse_mode="Markdown",
+            reply_markup=admin_menu()
+        )
+        await state.clear()
     except ValueError:
-        await message.answer("❌ Введите число")
+        await message.answer("❌ Введите число (количество товара)")
+
+# ========== АДМИН: ИЗМЕНЕНИЕ СРОКА ГОДНОСТИ ==========
+@dp.callback_query(F.data.startswith("edit_expiry_"))
+async def admin_edit_expiry(call: CallbackQuery, state: FSMContext):
+    if not is_admin(call.from_user.id):
+        await call.answer("⛔ Нет доступа")
+        return
+    product_id = int(call.data.split("_")[2])
+    product = get_product(product_id)
+    if product:
+        await state.update_data(product_id=product_id)
+        await call.message.answer(
+            f"📦 *{product['name']}*\n"
+            f"📅 Текущий срок годности: {product.get('expiry', 'Не указан')}\n\n"
+            f"✏️ *ВВЕДИТЕ НОВЫЙ СРОК ГОДНОСТИ*\n"
+            f"В формате: ММ.ГГГГ\n"
+            f"Например: 12.2026",
+            parse_mode="Markdown"
+        )
+        await state.set_state(AdminStates.waiting_for_new_expiry)
+    await call.answer()
 
 @dp.message(AdminStates.waiting_for_new_expiry)
 async def admin_set_new_expiry(message: Message, state: FSMContext):
@@ -307,26 +429,39 @@ async def admin_set_new_expiry(message: Message, state: FSMContext):
     
     new_expiry = message.text.strip()
     
-    if new_expiry.lower() == "нет":
-        await message.answer("✅ Срок годности не изменён!", reply_markup=admin_menu())
-        await state.clear()
-        return
-    
+    # Проверяем формат ММ.ГГГГ
     if not re.match(r'^(0[1-9]|1[0-2])\.(20[2-9][0-9])$', new_expiry):
-        await message.answer("❌ НЕВЕРНЫЙ ФОРМАТ!\n\nВведите дату в формате ММ.ГГГГ\nНапример: 12.2026\n\nИли введите 'нет' чтобы пропустить")
+        await message.answer(
+            "❌ *НЕВЕРНЫЙ ФОРМАТ!*\n\n"
+            "Введите дату в формате: ММ.ГГГГ\n"
+            "Например: 12.2026",
+            parse_mode="Markdown"
+        )
         return
     
     data = await state.get_data()
     product_id = data['product_id']
+    update_product_expiry(product_id, new_expiry)
+    product = get_product(product_id)
     
-    for cat in PRODUCTS.values():
-        for p in cat:
-            if p['id'] == product_id:
-                p['expiry'] = new_expiry
-                break
-    
-    await message.answer(f"✅ СРОК ГОДНОСТИ ОБНОВЛЁН!\n🆔 ID: {product_id}\n📅 Новый срок годности: {new_expiry}", reply_markup=admin_menu())
+    await message.answer(
+        f"✅ *СРОК ГОДНОСТИ ОБНОВЛЁН!*\n\n"
+        f"📦 {product['name']}\n"
+        f"📅 Новый срок годности: {new_expiry}",
+        parse_mode="Markdown",
+        reply_markup=admin_menu()
+    )
     await state.clear()
+
+# ========== АДМИН: НАЗАД ==========
+@dp.callback_query(F.data == "admin_back")
+async def admin_back(call: CallbackQuery):
+    if not is_admin(call.from_user.id):
+        await call.answer("⛔ Нет доступа")
+        return
+    await call.message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
+    await call.message.delete()
+    await call.answer()
 
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
@@ -374,12 +509,7 @@ async def show_products(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("add_"))
 async def add_to_cart(call: CallbackQuery):
     product_id = int(call.data.split("_")[1])
-    product = None
-    for cat in PRODUCTS.values():
-        for p in cat:
-            if p['id'] == product_id:
-                product = p
-                break
+    product = get_product(product_id)
     if not product:
         await call.answer("❌ Товар не найден")
         return
@@ -516,68 +646,4 @@ async def get_pickup_point(message: Message, state: FSMContext):
     # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
-    order_text += f"🔹 Username: @{username}\n"
-    order_text += f"📱 Телефон: {data['phone']}\n"
-    order_text += f"🆔 ID: {user_id}\n"
-    order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
-    order_text += f"🏠 Пункт выдачи: {message.text}\n\n"
-    order_text += f"📦 ТОВАРЫ:\n"
-    
-    for item in cart.values():
-        order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
-    
-    order_text += f"\n💰 ИТОГО: {total} руб.\n"
-    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
-    
-    # Отправляем заказ в чат
-    try:
-        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
-    except Exception as e:
-        print(f"Ошибка: {e}")
-    
-    # Очищаем корзину
-    carts[user_id] = {}
-    await state.clear()
-    
-    await message.answer(
-        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
-        f"👤 {data['fullname']}\n"
-        f"🔹 @{username}\n"
-        f"📱 {data['phone']}\n"
-        f"🚚 {data['delivery'].upper()}\n"
-        f"🏠 {message.text}\n"
-        f"💰 {total} руб.\n\n"
-        f"В ближайшее время с Вами свяжутся для согласования заказа.\n\n"
-        f"🐕 Спасибо за покупку!\n\n"
-        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
-        reply_markup=main_menu()
-    )
-
-@dp.callback_query(F.data == "main_back")
-async def main_back(call: CallbackQuery):
-    welcome_text = """🐾 *VetProfil* 
-
-🐾 *Профессиональные решения для здоровья животных* 
-
-✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
-
-⚡️ Внимательно подбираем ассортимент 
-⚡️ Контролируем качество 
-⚡️ Работаем на результат 
-
-❤️ *Для тех, кто заботится о своих питомцах осознанно* 
-
-✅ *VetProfil — надёжный партнёр в ветеринарии*
-
-👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
-    
-    await call.message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
-    await call.message.delete()
-    await call.answer()
-
-async def main():
-    print("🚀 Бот VetProfil запущен!")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    order_text += f
