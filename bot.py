@@ -33,80 +33,82 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ С ИНДИВИДУАЛЬНЫМИ ФОТОГРАФИЯМИ ==========
+# ========== ТОВАРЫ ==========
+# Структура: каждый товар - это группа с вариантами веса
 PRODUCTS = {
     "bravecto_tablets": {
+        "id": "bravecto_tablets",
         "name": "Бравекто (таблетки)",
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
-        "photo": "https://i.imgur.com/bravecto_tablets.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "variants": [
-            {"weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
-            {"weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
-            {"weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
-            {"weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
-            {"weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+            {"id": 1, "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10},
+            {"id": 2, "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8},
+            {"id": 3, "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12},
+            {"id": 4, "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6},
+            {"id": 5, "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
         ]
     },
     "bravecto_drops": {
+        "id": "bravecto_drops",
         "name": "Бравекто (капли)",
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
-        "photo": "https://i.imgur.com/bravecto_drops.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "variants": [
-            {"weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
-            {"weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
+            {"id": 6, "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7},
+            {"id": 7, "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5},
         ]
     },
     "simparica": {
+        "id": "simparica",
         "name": "Симпарика",
         "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
-        "photo": "https://i.imgur.com/simparica.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "variants": [
-            {"weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
-            {"weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
-            {"weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
-            {"weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
-            {"weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
-            {"weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
+            {"id": 8, "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8},
+            {"id": 9, "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10},
+            {"id": 10, "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12},
+            {"id": 11, "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9},
+            {"id": 12, "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7},
+            {"id": 13, "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5},
         ]
     },
     "simparica_trio": {
+        "id": "simparica_trio",
         "name": "Симпарика ТРИО",
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
-        "photo": "https://i.imgur.com/simparica_trio.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "variants": [
-            {"weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
-            {"weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
-            {"weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
-            {"weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
-            {"weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
-            {"weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
+            {"id": 14, "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6},
+            {"id": 15, "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8},
+            {"id": 16, "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10},
+            {"id": 17, "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7},
+            {"id": 18, "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5},
+            {"id": 19, "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4},
         ]
     },
     "tixfli": {
+        "id": "tixfli",
         "name": "Тиксфли",
         "desc": "✅ Защита от блох и клещей",
-        "photo": "https://i.imgur.com/tixfli.jpg",  # ЗАМЕНИТЕ НА РЕАЛЬНУЮ ССЫЛКУ
+        "photo": "https://i.imgur.com/8Qk3lB.jpg",
         "variants": [
-            {"weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
-            {"weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
-            {"weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
-            {"weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
-            {"weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
+            {"id": 20, "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15},
+            {"id": 21, "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12},
+            {"id": 22, "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10},
+            {"id": 23, "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8},
+            {"id": 24, "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6},
         ]
     }
 }
 
-# Для обратной совместимости: словарь всех вариантов с уникальными ID
+# Словарь для быстрого поиска варианта по ID
 ALL_VARIANTS = {}
-variant_counter = 1
 for product_key, product_data in PRODUCTS.items():
     for variant in product_data["variants"]:
-        variant["id"] = variant_counter
-        variant["product_key"] = product_key
         variant["product_name"] = product_data["name"]
         variant["product_photo"] = product_data["photo"]
-        ALL_VARIANTS[variant_counter] = variant
-        variant_counter += 1
+        ALL_VARIANTS[variant["id"]] = variant
 
 carts = {}
 
@@ -552,7 +554,7 @@ async def add_to_cart(call: CallbackQuery):
     variant = get_variant(variant_id)
     
     if not variant:
-        await call.answer("❌ Товар не найден")
+        await call.answer("❌ Товар не найден", show_alert=True)
         return
     
     user_id = call.from_user.id
@@ -570,7 +572,8 @@ async def add_to_cart(call: CallbackQuery):
         carts[user_id][variant_id] = {
             'name': f"{variant['product_name']} ({variant['weight']})",
             'price': variant['price'],
-            'qty': 1
+            'qty': 1,
+            'expiry': variant['expiry']
         }
     
     await call.answer(f"✅ {variant['product_name']} ({variant['weight']})\nВ корзине: {carts[user_id][variant_id]['qty']} шт.", show_alert=True)
@@ -749,6 +752,7 @@ async def main_back(call: CallbackQuery):
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print(f"📦 Загружено товаров: {len(get_all_variants())}")
+    print(f"🆔 ID товаров: {[v['id'] for v in get_all_variants()]}")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
