@@ -33,8 +33,7 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ (ВСЕ ID ПРОПИСАНЫ ЯВНО) ==========
-# Словарь для быстрого поиска товара по ID
+# ========== ТОВАРЫ (ВСЕ ВАРИАНТЫ С ID) ==========
 ALL_VARIANTS = {
     # Бравекто таблетки
     1: {"id": 1, "name": "Бравекто до 5 кг", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "product_name": "Бравекто (таблетки)"},
@@ -67,34 +66,34 @@ ALL_VARIANTS = {
     24: {"id": 24, "name": "Тиксфли 40-56 кг", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "product_name": "Тиксфли"},
 }
 
-# Группы товаров для отображения в каталоге
+# ГРУППЫ ТОВАРОВ ДЛЯ КАТАЛОГА
 PRODUCT_GROUPS = {
     "bravecto_tablets": {
-        "name": "Бравекто (таблетки)",
+        "name": "🟢 Бравекто (таблетки)",
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "variants": [1, 2, 3, 4, 5]
     },
     "bravecto_drops": {
-        "name": "Бравекто (капли)",
+        "name": "🟢 Бравекто (капли)",
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "variants": [6, 7]
     },
     "simparica": {
-        "name": "Симпарика",
+        "name": "🟠 Симпарика",
         "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "variants": [8, 9, 10, 11, 12, 13]
     },
     "simparica_trio": {
-        "name": "Симпарика ТРИО",
+        "name": "🟠 Симпарика ТРИО",
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "variants": [14, 15, 16, 17, 18, 19]
     },
     "tixfli": {
-        "name": "Тиксфли",
+        "name": "🔵 Тиксфли",
         "desc": "✅ Защита от блох и клещей",
         "photo": "https://i.imgur.com/8Qk3lB.jpg",
         "variants": [20, 21, 22, 23, 24]
@@ -171,16 +170,13 @@ def edit_choice_menu(variant_id, variant_name):
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="admin_back")]
     ])
 
-def categories_menu():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🟢 БРАВЕКТО (таблетки)", callback_data="product_bravecto_tablets")],
-        [InlineKeyboardButton(text="🟢 БРАВЕКТО (капли)", callback_data="product_bravecto_drops")],
-        [InlineKeyboardButton(text="🟠 СИМПАРИКА", callback_data="product_simparica")],
-        [InlineKeyboardButton(text="🟠 СИМПАРИКА ТРИО", callback_data="product_simparica_trio")],
-        [InlineKeyboardButton(text="🔵 ТИКСФЛИ", callback_data="product_tixfli")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
-    ])
+def catalog_menu():
+    buttons = []
+    for key, group in PRODUCT_GROUPS.items():
+        buttons.append([InlineKeyboardButton(text=group['name'], callback_data=f"product_{key}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def variant_buttons(variant_ids):
     buttons = []
@@ -500,7 +496,7 @@ async def admin_back(call: CallbackQuery):
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
-    await call.message.answer("📁 *ВЫБЕРИТЕ ТОВАР:*", parse_mode="Markdown", reply_markup=categories_menu())
+    await call.message.answer("📁 *ВЫБЕРИТЕ ТОВАР:*", parse_mode="Markdown", reply_markup=catalog_menu())
     await call.message.delete()
     await call.answer()
 
