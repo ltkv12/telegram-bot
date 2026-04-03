@@ -76,23 +76,15 @@ TIXFLI = [
     {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
 ]
 
-# Словари для категорий
-CATEGORIES = {
-    "bravecto_tablets": {"name": "Бравекто (таблетки)", "products": BRAVECTO_TABLETS, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    "bravecto_drops": {"name": "Бравекто (капли)", "products": BRAVECTO_DROPS, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    "simparica": {"name": "Симпарика", "products": SIMPARICA, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    "simparica_trio": {"name": "Симпарика ТРИО", "products": SIMPARICA_TRIO, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    "tixfli": {"name": "Тиксфли", "products": TIXFLI, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
-}
+# Общий список всех товаров
+ALL_PRODUCTS_LIST = BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI
 
-# Общий словарь всех товаров по ID
+# Словарь для быстрого поиска по ID
 ALL_PRODUCTS = {}
-for cat in CATEGORIES.values():
-    for product in cat["products"]:
-        ALL_PRODUCTS[product["id"]] = product
+for item in ALL_PRODUCTS_LIST:
+    ALL_PRODUCTS[item["id"]] = item
 
 carts = {}
-current_search_category = {}
 
 def is_admin(user_id):
     return user_id in ADMINS_IDS
@@ -100,11 +92,11 @@ def is_admin(user_id):
 def get_product(product_id):
     return ALL_PRODUCTS.get(product_id)
 
-def search_in_category(query, category_products):
-    """Поиск товара в конкретной категории"""
+def search_products(query):
+    """Глобальный поиск по всем товарам"""
     query_lower = query.lower().strip()
     results = []
-    for product in category_products:
+    for product in ALL_PRODUCTS_LIST:
         if query_lower in product["name_ru"].lower() or query_lower in product["name_en"].lower():
             results.append(product)
     return results
@@ -141,6 +133,7 @@ def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
+        [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
     ])
@@ -171,13 +164,6 @@ def catalog_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-def category_action_buttons(category_key):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔍 ПОИСК В КАТЕГОРИИ", callback_data=f"search_in_{category_key}")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-    ])
-
 def product_buttons(product_id):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")],
@@ -185,13 +171,45 @@ def product_buttons(product_id):
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
     ])
 
-def search_result_buttons(product_id, category_key):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="🔍 НОВЫЙ ПОИСК", callback_data=f"search_in_{category_key}")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-    ])
+def bravecto_tablets_buttons():
+    buttons = []
+    for p in BRAVECTO_TABLETS:
+        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def bravecto_drops_buttons():
+    buttons = []
+    for p in BRAVECTO_DROPS:
+        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def simparica_buttons():
+    buttons = []
+    for p in SIMPARICA:
+        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def simparica_trio_buttons():
+    buttons = []
+    for p in SIMPARICA_TRIO:
+        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def tixfli_buttons():
+    buttons = []
+    for p in TIXFLI:
+        buttons.append([InlineKeyboardButton(text=f"📦 {p['weight']} - {p['price']}₽", callback_data=f"add_{p['id']}")])
+    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -212,6 +230,16 @@ def delivery_menu():
 def faq_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
+        [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+    ])
+
+def search_result_buttons(product_id):
+    """Кнопки для добавления товара из поиска в корзину"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="➕ ДОБАВИТЬ В КОРЗИНУ", callback_data=f"add_{product_id}")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+        [InlineKeyboardButton(text="🔍 НОВЫЙ ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
@@ -242,6 +270,71 @@ async def admin_panel(message: Message):
         await message.answer("⛔ Нет доступа")
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
+
+# ========== ПОИСК ==========
+@dp.callback_query(F.data == "search")
+async def search_start(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text(
+        "🔍 *ПОИСК ТОВАРОВ*\n\n"
+        "Введите название товара на русском или английском языке.\n\n"
+        "Примеры:\n"
+        "• Бравекто / Bravecto\n"
+        "• Симпарика / Simparica\n"
+        "• Тиксфли / Tixfli\n\n"
+        "🔎 Введите запрос:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(SearchForm.waiting_for_query)
+    await call.answer()
+
+@dp.message(SearchForm.waiting_for_query)
+async def search_products_handler(message: Message, state: FSMContext):
+    query = message.text.strip()
+    
+    if len(query) < 2:
+        await message.answer("❌ Введите минимум 2 символа для поиска")
+        return
+    
+    results = search_products(query)
+    
+    if not results:
+        await message.answer(
+            f"🔍 По запросу *{query}* ничего не найдено.\n\n"
+            f"Попробуйте:\n"
+            f"• Бравекто / Bravecto\n"
+            f"• Симпарика / Simparica\n"
+            f"• Тиксфли / Tixfli",
+            parse_mode="Markdown",
+            reply_markup=faq_menu()
+        )
+        await state.clear()
+        return
+    
+    # Отправляем результаты поиска (как в каталоге - с фото)
+    await message.answer(f"🔍 *Результаты поиска по запросу:* \"{query}\"\n\n📦 Найдено товаров: {len(results)}", parse_mode="Markdown")
+    
+    for product in results:
+        text = f"*{product['name_ru']}* / *{product['name_en']}*\n\n"
+        text += f"⚖️ Вес: {product['weight']}\n"
+        text += f"💰 Цена: {product['price']}₽\n"
+        text += f"📅 Срок годности: {product['expiry']}\n\n"
+        text += f"👇 *Добавьте товар в корзину* 👇"
+        
+        try:
+            await message.answer_photo(
+                photo=product['photo'],
+                caption=text,
+                parse_mode="Markdown",
+                reply_markup=search_result_buttons(product['id'])
+            )
+        except Exception as e:
+            await message.answer(
+                text,
+                parse_mode="Markdown",
+                reply_markup=search_result_buttons(product['id'])
+            )
+    
+    await state.clear()
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
@@ -292,7 +385,7 @@ async def faq(call: CallbackQuery):
     await call.message.edit_text(faq_text, parse_mode="Markdown", reply_markup=faq_menu())
     await call.answer()
 
-# ========== АДМИН: ПРОСМОТР ВСЕХ ТОВАРОВ ==========
+# ========== АДМИН ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
@@ -300,17 +393,31 @@ async def admin_show_stock(call: CallbackQuery):
         return
     
     text = "📊 *ВСЕ ТОВАРЫ:*\n\n"
-    for cat_key, cat_data in CATEGORIES.items():
-        text += f"📁 *{cat_data['name']}*\n"
-        for p in cat_data["products"]:
-            text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
-        text += "\n"
+    
+    text += "🟢 *Бравекто (таблетки)*\n"
+    for p in BRAVECTO_TABLETS:
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+    
+    text += "\n🟢 *Бравекто (капли)*\n"
+    for p in BRAVECTO_DROPS:
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+    
+    text += "\n🟠 *Симпарика*\n"
+    for p in SIMPARICA:
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+    
+    text += "\n🟠 *Симпарика ТРИО*\n"
+    for p in SIMPARICA_TRIO:
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+    
+    text += "\n🔵 *Тиксфли*\n"
+    for p in TIXFLI:
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
     
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
     await call.answer()
 
-# ========== АДМИН: ВЫБОР ТОВАРА ДЛЯ ИЗМЕНЕНИЯ ==========
 @dp.callback_query(F.data == "admin_edit_stock")
 async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
@@ -318,10 +425,11 @@ async def admin_edit_stock_start(call: CallbackQuery, state: FSMContext):
         return
     
     text = "✏️ *ВВЕДИТЕ ID ТОВАРА ДЛЯ РЕДАКТИРОВАНИЯ:*\n\n"
-    for cat_key, cat_data in CATEGORIES.items():
-        text += f"📁 {cat_data['name']}: "
-        ids = [str(p['id']) for p in cat_data["products"]]
-        text += ", ".join(ids) + "\n"
+    text += "🟢 Бравекто (таблетки): ID 1,2,3,4,5\n"
+    text += "🟢 Бравекто (капли): ID 6,7\n"
+    text += "🟠 Симпарика: ID 8-13\n"
+    text += "🟠 Симпарика ТРИО: ID 14-19\n"
+    text += "🔵 Тиксфли: ID 20-24\n"
     
     await call.message.answer(text, parse_mode="Markdown")
     await call.message.delete()
@@ -352,7 +460,6 @@ async def admin_get_product_id(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Введите число (ID товара)")
 
-# ========== АДМИН: ИЗМЕНЕНИЕ ЦЕНЫ ==========
 @dp.callback_query(F.data.startswith("edit_price_"))
 async def admin_edit_price(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
@@ -395,7 +502,6 @@ async def admin_set_new_price(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Введите число (цену в рублях)")
 
-# ========== АДМИН: ИЗМЕНЕНИЕ ОСТАТКОВ ==========
 @dp.callback_query(F.data.startswith("edit_stock_"))
 async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
@@ -438,7 +544,6 @@ async def admin_set_new_stock(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Введите число (количество товара)")
 
-# ========== АДМИН: ИЗМЕНЕНИЕ СРОКА ГОДНОСТИ ==========
 @dp.callback_query(F.data.startswith("edit_expiry_"))
 async def admin_edit_expiry(call: CallbackQuery, state: FSMContext):
     if not is_admin(call.from_user.id):
@@ -489,7 +594,6 @@ async def admin_set_new_expiry(message: Message, state: FSMContext):
     )
     await state.clear()
 
-# ========== АДМИН: НАЗАД ==========
 @dp.callback_query(F.data == "admin_back")
 async def admin_back(call: CallbackQuery):
     if not is_admin(call.from_user.id):
@@ -502,116 +606,104 @@ async def admin_back(call: CallbackQuery):
 # ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
-    await call.message.answer("📁 *ВЫБЕРИТЕ КАТЕГОРИЮ:*", parse_mode="Markdown", reply_markup=catalog_menu())
+    await call.message.answer("📁 *ВЫБЕРИТЕ ТОВАР:*", parse_mode="Markdown", reply_markup=catalog_menu())
     await call.message.delete()
     await call.answer()
 
-# ========== ПОКАЗ КАТЕГОРИИ ==========
-def make_category_show_handler(category_key, category_data):
-    async def handler(call: CallbackQuery):
-        text = f"*{category_data['name']}*\n\n"
-        text += f"📊 *Доступные варианты:*\n"
-        
-        for p in category_data["products"]:
-            text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
-        
-        text += "\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"
-        
-        try:
-            await call.message.answer_photo(
-                photo=category_data['photo'],
-                caption=text,
-                parse_mode="Markdown",
-                reply_markup=category_action_buttons(category_key)
-            )
-        except:
-            await call.message.answer(
-                text,
-                parse_mode="Markdown",
-                reply_markup=category_action_buttons(category_key)
-            )
-        await call.answer()
-    return handler
-
-# Регистрируем обработчики для каждой категории
-dp.callback_query(F.data == "show_bravecto_tablets")(make_category_show_handler("bravecto_tablets", CATEGORIES["bravecto_tablets"]))
-dp.callback_query(F.data == "show_bravecto_drops")(make_category_show_handler("bravecto_drops", CATEGORIES["bravecto_drops"]))
-dp.callback_query(F.data == "show_simparica")(make_category_show_handler("simparica", CATEGORIES["simparica"]))
-dp.callback_query(F.data == "show_simparica_trio")(make_category_show_handler("simparica_trio", CATEGORIES["simparica_trio"]))
-dp.callback_query(F.data == "show_tixfli")(make_category_show_handler("tixfli", CATEGORIES["tixfli"]))
-
-# ========== ПОИСК В КАТЕГОРИИ ==========
-@dp.callback_query(F.data.startswith("search_in_"))
-async def search_in_category_start(call: CallbackQuery, state: FSMContext):
-    category_key = call.data.split("_")[2]
-    current_search_category[call.from_user.id] = category_key
+@dp.callback_query(F.data == "show_bravecto_tablets")
+async def show_bravecto_tablets(call: CallbackQuery):
+    text = "*🟢 Бравекто (таблетки) / Bravecto (tablets)*\n\n"
+    text += "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка\n\n"
+    text += "*📊 Доступные варианты:*\n"
     
-    await call.message.edit_text(
-        f"🔍 *ПОИСК В КАТЕГОРИИ:* {CATEGORIES[category_key]['name']}\n\n"
-        f"Введите название товара на русском или английском языке.\n\n"
-        f"Примеры:\n"
-        f"• Бравекто / Bravecto\n"
-        f"• 5-10 кг\n\n"
-        f"🔎 Введите запрос:",
-        parse_mode="Markdown"
+    for p in BRAVECTO_TABLETS:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
+    
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
+    
+    await call.message.answer_photo(
+        photo="https://i.imgur.com/5Q8k3lB.jpg",
+        caption=text,
+        parse_mode="Markdown",
+        reply_markup=bravecto_tablets_buttons()
     )
-    await state.set_state(SearchForm.waiting_for_query)
     await call.answer()
 
-@dp.message(SearchForm.waiting_for_query)
-async def search_in_category_handler(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    category_key = current_search_category.get(user_id)
+@dp.callback_query(F.data == "show_bravecto_drops")
+async def show_bravecto_drops(call: CallbackQuery):
+    text = "*🟢 Бравекто (капли) / Bravecto (drops)*\n\n"
+    text += "✅ Капли от блох и клещей\n💊 Защита на 12 недель\n\n"
+    text += "*📊 Доступные варианты:*\n"
     
-    if not category_key or category_key not in CATEGORIES:
-        await message.answer("❌ Ошибка: категория не выбрана. Пожалуйста, начните поиск заново из каталога.")
-        await state.clear()
-        return
+    for p in BRAVECTO_DROPS:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
     
-    query = message.text.strip()
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
-    if len(query) < 2:
-        await message.answer("❌ Введите минимум 2 символа для поиска")
-        return
+    await call.message.answer_photo(
+        photo="https://i.imgur.com/5Q8k3lB.jpg",
+        caption=text,
+        parse_mode="Markdown",
+        reply_markup=bravecto_drops_buttons()
+    )
+    await call.answer()
+
+@dp.callback_query(F.data == "show_simparica")
+async def show_simparica(call: CallbackQuery):
+    text = "*🟠 Симпарика / Simparica*\n\n"
+    text += "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней\n\n"
+    text += "*📊 Доступные варианты:*\n"
     
-    category_data = CATEGORIES[category_key]
-    results = search_in_category(query, category_data["products"])
+    for p in SIMPARICA:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
     
-    if not results:
-        await message.answer(
-            f"🔍 По запросу *{query}* в категории *{category_data['name']}* ничего не найдено.\n\n"
-            f"Попробуйте другие ключевые слова.",
-            parse_mode="Markdown",
-            reply_markup=category_action_buttons(category_key)
-        )
-        await state.clear()
-        return
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
-    # Отправляем результаты поиска
-    await message.answer(f"🔍 *Результаты поиска в категории {category_data['name']} по запросу:* \"{query}\"\n\n📦 Найдено товаров: {len(results)}", parse_mode="Markdown")
+    await call.message.answer_photo(
+        photo="https://i.imgur.com/WK9qP5c.jpg",
+        caption=text,
+        parse_mode="Markdown",
+        reply_markup=simparica_buttons()
+    )
+    await call.answer()
+
+@dp.callback_query(F.data == "show_simparica_trio")
+async def show_simparica_trio(call: CallbackQuery):
+    text = "*🟠 Симпарика ТРИО / Simparica TRIO*\n\n"
+    text += "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки\n\n"
+    text += "*📊 Доступные варианты:*\n"
     
-    for product in results:
-        text = f"*{product['name_ru']}* / *{product['name_en']}*\n\n"
-        text += f"⚖️ Вес: {product['weight']}\n"
-        text += f"💰 Цена: {product['price']}₽\n"
-        text += f"📅 Срок годности: {product['expiry']}\n\n"
-        text += f"👇 *Добавьте товар в корзину* 👇"
-        
-        try:
-            await message.answer_photo(
-                photo=product['photo'],
-                caption=text,
-                parse_mode="Markdown",
-                reply_markup=search_result_buttons(product['id'], category_key)
-            )
-        except Exception as e:
-            await message.answer(
-                text,
-                parse_mode="Markdown",
-                reply_markup=search_result_buttons(product['id'], category_key)
-            )
+    for p in SIMPARICA_TRIO:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
     
-    await state.clear()
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
+    
+    await call.message.answer_photo(
+        photo="https://i.imgur.com/WK9qP5c.jpg",
+        caption=text,
+        parse_mode="Markdown",
+        reply_markup=simparica_trio_buttons()
+    )
+    await call.answer()
+
+@dp.callback_query(F.data == "show_tixfli")
+async def show_tixfli(call: CallbackQuery):
+    text = "*🔵 Тиксфли / Tixfli*\n\n"
+    text += "✅ Защита от блох и клещей\n\n"
+    text += "*📊 Доступные варианты:*\n"
+    
+    for p in TIXFLI:
+        text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
+    
+    text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
+    
+    await call.message.answer_photo(
+        photo="https://i.imgur.com/8Qk3lB.jpg",
+        caption=text,
+        parse_mode="Markdown",
+        reply_markup=tixfli_buttons()
+    )
+    await call.answer()
 
 # ========== ДОБАВЛЕНИЕ В КОРЗИНУ ==========
 @dp.callback_query(F.data.startswith("add_"))
@@ -817,9 +909,9 @@ async def main_back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
-    print(f"📦 Загружено категорий: {len(CATEGORIES)}")
     print(f"📦 Загружено товаров: {len(ALL_PRODUCTS)}")
-    print("🔍 Поиск работает внутри каждой категории")
+    print("🔍 Поиск работает на русском и английском")
+    print("🖼️ Товары из поиска отображаются с фото")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
