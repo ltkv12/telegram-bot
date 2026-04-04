@@ -36,25 +36,25 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ (ВРЕМЕННЫЕ ФОТО, РАБОТАЮТ) ==========
-# Фото для Бравекто (горизонтальные)
-BRAVECTO_PHOTO = "https://i.imgur.com/5Q8k3lB.jpg"
-# Фото для Симпарика
-SIMPARICA_PHOTO = "https://i.imgur.com/WK9qP5c.jpg"
-# Фото для Тиксфли
-TIXFLI_PHOTO = "https://i.imgur.com/8Qk3lB.jpg"
+# ========== ТВОИ ФОТО (ПРЯМЫЕ RAW-ССЫЛКИ) ==========
+BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
+BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
+SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
+SIMPARICA_TRIO_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"  # пока используем то же фото
+TIXFLI_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/tixfli.jpg"
 
+# ========== ТОВАРЫ ==========
 BRAVECTO_TABLETS = [
-    {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "photo": BRAVECTO_PHOTO},
-    {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "photo": BRAVECTO_PHOTO},
-    {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "photo": BRAVECTO_PHOTO},
-    {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "photo": BRAVECTO_PHOTO},
-    {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": BRAVECTO_PHOTO},
+    {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "photo": BRAVECTO_TABLETS_PHOTO},
+    {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "photo": BRAVECTO_TABLETS_PHOTO},
+    {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "photo": BRAVECTO_TABLETS_PHOTO},
+    {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "photo": BRAVECTO_TABLETS_PHOTO},
+    {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": BRAVECTO_TABLETS_PHOTO},
 ]
 
 BRAVECTO_DROPS = [
-    {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "photo": BRAVECTO_PHOTO},
-    {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "photo": BRAVECTO_PHOTO},
+    {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "photo": BRAVECTO_DROPS_PHOTO},
+    {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "photo": BRAVECTO_DROPS_PHOTO},
 ]
 
 SIMPARICA = [
@@ -67,12 +67,12 @@ SIMPARICA = [
 ]
 
 SIMPARICA_TRIO = [
-    {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "photo": SIMPARICA_PHOTO},
-    {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "photo": SIMPARICA_PHOTO},
-    {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "photo": SIMPARICA_PHOTO},
-    {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "photo": SIMPARICA_PHOTO},
-    {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "photo": SIMPARICA_PHOTO},
-    {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": SIMPARICA_PHOTO},
+    {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "photo": SIMPARICA_TRIO_PHOTO},
+    {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "photo": SIMPARICA_TRIO_PHOTO},
+    {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "photo": SIMPARICA_TRIO_PHOTO},
+    {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "photo": SIMPARICA_TRIO_PHOTO},
+    {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "photo": SIMPARICA_TRIO_PHOTO},
+    {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": SIMPARICA_TRIO_PHOTO},
 ]
 
 TIXFLI = [
@@ -97,7 +97,7 @@ CATEGORIES = {
         "name": "🟢 Бравекто (таблетки)",
         "short_name": "Бравекто таблетки",
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
-        "photo": BRAVECTO_PHOTO,
+        "photo": BRAVECTO_TABLETS_PHOTO,
         "products": BRAVECTO_TABLETS,
         "keywords": ["бравекто таблетки", "bravecto tablets"]
     },
@@ -105,7 +105,7 @@ CATEGORIES = {
         "name": "🟢 Бравекто (капли)",
         "short_name": "Бравекто капли",
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
-        "photo": BRAVECTO_PHOTO,
+        "photo": BRAVECTO_DROPS_PHOTO,
         "products": BRAVECTO_DROPS,
         "keywords": ["бравекто капли", "bravecto drops"]
     },
@@ -121,7 +121,7 @@ CATEGORIES = {
         "name": "🟠 Симпарика ТРИО",
         "short_name": "Симпарика ТРИО",
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
-        "photo": SIMPARICA_PHOTO,
+        "photo": SIMPARICA_TRIO_PHOTO,
         "products": SIMPARICA_TRIO,
         "keywords": ["симпарика трио", "simparica trio"]
     },
@@ -669,7 +669,7 @@ async def show_bravecto_tablets(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo=BRAVECTO_PHOTO,
+        photo=BRAVECTO_TABLETS_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("bravecto_tablets", BRAVECTO_TABLETS)
@@ -688,7 +688,7 @@ async def show_bravecto_drops(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo=BRAVECTO_PHOTO,
+        photo=BRAVECTO_DROPS_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("bravecto_drops", BRAVECTO_DROPS)
@@ -726,7 +726,7 @@ async def show_simparica_trio(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo=SIMPARICA_PHOTO,
+        photo=SIMPARICA_TRIO_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("simparica_trio", SIMPARICA_TRIO)
