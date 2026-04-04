@@ -84,7 +84,7 @@ CATEGORIES = {
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "products": BRAVECTO_TABLETS,
-        "keywords": ["бравекто", "bravecto", "bravecto tablets", "bravecto таблетки", "бравекто таблетки"]
+        "keywords": ["бравекто таблетки", "bravecto tablets", "bravecto таблетки"]
     },
     "bravecto_drops": {
         "name": "🟢 Бравекто (капли)",
@@ -92,7 +92,7 @@ CATEGORIES = {
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
         "photo": "https://i.imgur.com/5Q8k3lB.jpg",
         "products": BRAVECTO_DROPS,
-        "keywords": ["бравекто капли", "bravecto drops", "bravecto капли", "капли бравекто"]
+        "keywords": ["бравекто капли", "bravecto drops", "bravecto капли"]
     },
     "simparica": {
         "name": "🟠 Симпарика",
@@ -100,7 +100,7 @@ CATEGORIES = {
         "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "products": SIMPARICA,
-        "keywords": ["симпарика", "simparica", "симпарика таблетки"]
+        "keywords": ["симпарика", "simparica"]
     },
     "simparica_trio": {
         "name": "🟠 Симпарика ТРИО",
@@ -108,7 +108,7 @@ CATEGORIES = {
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
         "photo": "https://i.imgur.com/WK9qP5c.jpg",
         "products": SIMPARICA_TRIO,
-        "keywords": ["симпарика трио", "simparica trio", "симпарика трио таблетки"]
+        "keywords": ["симпарика трио", "simparica trio"]
     },
     "tixfli": {
         "name": "🔵 Тиксфли",
@@ -116,7 +116,7 @@ CATEGORIES = {
         "desc": "✅ Защита от блох и клещей",
         "photo": "https://i.imgur.com/8Qk3lB.jpg",
         "products": TIXFLI,
-        "keywords": ["тиксфли", "tixfli", "тиксфли таблетки"]
+        "keywords": ["тиксфли", "tixfli"]
     }
 }
 
@@ -138,10 +138,15 @@ def search_categories(query):
     """Поиск категорий по ключевым словам"""
     query_lower = query.lower().strip()
     found_categories = []
+    
+    # Специальная обработка для "бравекто" (без уточнения)
+    if query_lower in ["бравекто", "bravecto"]:
+        return ["bravecto_tablets", "bravecto_drops"]
+    
     for cat_key, cat_data in CATEGORIES.items():
         for keyword in cat_data["keywords"]:
             if keyword in query_lower:
-                found_categories.append((cat_key, cat_data))
+                found_categories.append(cat_key)
                 break
     return found_categories
 
@@ -223,14 +228,14 @@ def category_buttons(category_key, products):
     buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def search_result_menu(categories_list):
-    """Меню выбора категории при поиске"""
-    buttons = []
-    for cat_key, cat_data in categories_list:
-        buttons.append([InlineKeyboardButton(text=cat_data["short_name"], callback_data=f"search_go_{cat_key}")])
-    buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
-    buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
+def search_result_menu():
+    """Меню выбора категории при поиске 'Бравекто'"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🟢 Бравекто (таблетки)", callback_data="search_go_bravecto_tablets")],
+        [InlineKeyboardButton(text="🟢 Бравекто (капли)", callback_data="search_go_bravecto_drops")],
+        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
+    ])
 
 def cart_buttons():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -290,7 +295,7 @@ async def search_start(call: CallbackQuery, state: FSMContext):
         "🔍 *ПОИСК ТОВАРОВ В КАТАЛОГЕ*\n\n"
         "Введите название товара на русском или английском языке.\n\n"
         "Примеры:\n"
-        "• Бравекто / Bravecto - покажет Бравекто (таблетки и капли)\n"
+        "• Бравекто / Bravecto - покажет таблетки и капли\n"
         "• Симпарика / Simparica - покажет Симпарику\n"
         "• Тиксфли / Tixfli - покажет Тиксфли\n\n"
         "🔎 Введите запрос:",
@@ -307,11 +312,27 @@ async def search_products_handler(message: Message, state: FSMContext):
         await message.answer("❌ Введите минимум 2 символа для поиска")
         return
     
+    query_lower = query.lower()
+    
+    # Специальная обработка для "бравекто" - показываем выбор между таблетками и каплями
+    if query_lower in ["бравекто", "bravecto"]:
+        text = "🔍 *По запросу \"Бравекто\" найдено несколько категорий:*\n\n"
+        text += "• 🟢 Бравекто (таблетки)\n"
+        text += "• 🟢 Бравекто (капли)\n\n"
+        text += "👇 *ВЫБЕРИТЕ НУЖНУЮ ФОРМУ* 👇"
+        
+        await message.answer(
+            text,
+            parse_mode="Markdown",
+            reply_markup=search_result_menu()
+        )
+        await state.clear()
+        return
+    
     # Ищем категории по запросу
     found_categories = search_categories(query)
     
     if not found_categories:
-        # Показываем возможные варианты
         variants = "🔍 *По вашему запросу ничего не найдено.*\n\n"
         variants += "Попробуйте один из вариантов:\n"
         variants += "• Бравекто / Bravecto\n"
@@ -326,7 +347,8 @@ async def search_products_handler(message: Message, state: FSMContext):
     
     # Если найдена одна категория - открываем её сразу
     if len(found_categories) == 1:
-        cat_key, cat_data = found_categories[0]
+        cat_key = found_categories[0]
+        cat_data = CATEGORIES[cat_key]
         text = f"*{cat_data['name']}*\n\n"
         text += f"{cat_data['desc']}\n\n"
         text += "*📊 Доступные варианты:*\n"
@@ -352,14 +374,20 @@ async def search_products_handler(message: Message, state: FSMContext):
     else:
         # Если найдено несколько категорий - показываем меню выбора
         text = f"🔍 *По запросу \"{query}\" найдено несколько категорий:*\n\n"
-        for cat_key, cat_data in found_categories:
-            text += f"• {cat_data['short_name']}\n"
+        for cat_key in found_categories:
+            text += f"• {CATEGORIES[cat_key]['short_name']}\n"
         text += "\n👇 *ВЫБЕРИТЕ НУЖНУЮ КАТЕГОРИЮ* 👇"
+        
+        buttons = []
+        for cat_key in found_categories:
+            buttons.append([InlineKeyboardButton(text=CATEGORIES[cat_key]['short_name'], callback_data=f"search_go_{cat_key}")])
+        buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
+        buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
         
         await message.answer(
             text,
             parse_mode="Markdown",
-            reply_markup=search_result_menu(found_categories)
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
         )
     
     await state.clear()
