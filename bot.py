@@ -6,6 +6,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from database import init_db, get_stock, update_stock, decrease_stock as db_decrease_stock, save_all_products, load_stocks_to_memory
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 
@@ -88,6 +89,32 @@ ALL_PRODUCTS = {}
 for item in ALL_PRODUCTS_LIST:
     ALL_PRODUCTS[item["id"]] = item
 
+# ========== ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ ==========
+init_db()
+save_all_products(ALL_PRODUCTS)
+load_stocks_to_memory(ALL_PRODUCTS)
+
+# ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ОСТАТКАМИ (С БД) ==========
+def get_product_stock(product_id):
+    return get_stock(product_id)
+
+def update_product_stock(product_id, new_stock):
+    update_stock(product_id, new_stock)
+    if product_id in ALL_PRODUCTS:
+        ALL_PRODUCTS[product_id]['stock'] = new_stock
+    return True
+
+def decrease_stock(product_id, quantity):
+    if db_decrease_stock(product_id, quantity):
+        if product_id in ALL_PRODUCTS:
+            ALL_PRODUCTS[product_id]['stock'] -= quantity
+        return True
+    return False
+
+def get_product(product_id):
+    return ALL_PRODUCTS.get(product_id)
+
+# ========== КАТЕГОРИИ ==========
 CATEGORIES = {
     "bravecto_tablets": {"name": "🟢 Бравекто (таблетки)", "short_name": "Бравекто таблетки", "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка", "photo": BRAVECTO_TABLETS_PHOTO, "products": BRAVECTO_TABLETS, "keywords": ["бравекто таблетки", "bravecto tablets"]},
     "bravecto_drops": {"name": "🟢 Бравекто (капли)", "short_name": "Бравекто капли", "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель", "photo": BRAVECTO_DROPS_PHOTO, "products": BRAVECTO_DROPS, "keywords": ["бравекто капли", "bravecto drops"]},
@@ -100,9 +127,6 @@ carts = {}
 
 def is_admin(user_id):
     return user_id in ADMINS_IDS
-
-def get_product(product_id):
-    return ALL_PRODUCTS.get(product_id)
 
 def search_categories(query):
     query_lower = query.lower().strip()
@@ -122,27 +146,16 @@ def update_product_price(product_id, new_price):
         return True
     return False
 
-def update_product_stock(product_id, new_stock):
-    if product_id in ALL_PRODUCTS:
-        ALL_PRODUCTS[product_id]['stock'] = new_stock
-        return True
-    return False
-
 def update_product_expiry(product_id, new_expiry):
     if product_id in ALL_PRODUCTS:
         ALL_PRODUCTS[product_id]['expiry'] = new_expiry
         return True
     return False
 
-def decrease_stock(product_id, quantity):
-    if product_id in ALL_PRODUCTS and ALL_PRODUCTS[product_id]['stock'] >= quantity:
-        ALL_PRODUCTS[product_id]['stock'] -= quantity
-        return True
-    return False
-
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
 
+# ========== КЛАВИАТУРЫ (те же, что были) ==========
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
@@ -217,6 +230,7 @@ def faq_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
+# ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
     welcome_text = """🐾 *VetProfil* 
@@ -244,6 +258,7 @@ async def admin_panel(message: Message):
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
 
+# ========== ПОИСК ==========
 @dp.callback_query(F.data == "search")
 async def search_start(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(
@@ -358,6 +373,7 @@ async def search_go_to_category(call: CallbackQuery):
         await call.message.answer(text, parse_mode="Markdown", reply_markup=category_buttons(category_key, category_data['products']))
     await call.answer()
 
+# ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
 async def faq(call: CallbackQuery):
     faq_text = """❓ *ЧАСТЫЕ ВОПРОСЫ*
@@ -406,6 +422,7 @@ async def faq(call: CallbackQuery):
     await call.message.edit_text(faq_text, parse_mode="Markdown", reply_markup=faq_menu())
     await call.answer()
 
+# ========== АДМИН ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
@@ -416,7 +433,8 @@ async def admin_show_stock(call: CallbackQuery):
     for cat_key, cat_data in CATEGORIES.items():
         text += f"📁 *{cat_data['short_name']}*\n"
         for p in cat_data['products']:
-            text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+            stock = get_product_stock(p['id'])
+            text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
         text += "\n"
     
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
@@ -451,7 +469,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
             await message.answer(
                 f"📦 *{product['name_ru']} / {product['name_en']}*\n\n"
                 f"💰 Цена: {product['price']} руб.\n"
-                f"📦 Остаток: {product['stock']} шт.\n"
+                f"📦 Остаток: {get_product_stock(product_id)} шт.\n"
                 f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
                 f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
                 parse_mode="Markdown",
@@ -516,7 +534,7 @@ async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
         await state.update_data(product_id=product_id)
         await call.message.answer(
             f"📦 *{product['name_ru']} / {product['name_en']}*\n"
-            f"📦 Текущий остаток: {product['stock']} шт.\n\n"
+            f"📦 Текущий остаток: {get_product_stock(product_id)} шт.\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):*",
             parse_mode="Markdown"
         )
@@ -723,9 +741,10 @@ async def add_to_cart(call: CallbackQuery):
     
     user_id = call.from_user.id
     current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
+    current_stock = get_product_stock(product_id)
     
-    if current_in_cart >= product['stock']:
-        await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {product['stock']} шт.", show_alert=True)
+    if current_in_cart >= current_stock:
+        await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {current_stock} шт.", show_alert=True)
         return
     
     if user_id not in carts:
@@ -835,9 +854,9 @@ async def get_pickup_point(message: Message, state: FSMContext):
         return
     
     for product_id, item in cart.items():
-        product = get_product(int(product_id))
-        if product and item['qty'] > product['stock']:
-            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {product['stock']} шт.")
+        current_stock = get_product_stock(int(product_id))
+        if item['qty'] > current_stock:
+            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
             await state.clear()
             return
     
@@ -908,6 +927,7 @@ async def main_back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
+    print("💾 Остатки сохраняются в базе данных!")
     print("🔍 Поиск: 'Бравекто' покажет таблетки и капли")
     await dp.start_polling(bot)
 
