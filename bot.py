@@ -40,7 +40,7 @@ class AdminStates(StatesGroup):
 BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
 BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
 SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
-SIMPARICA_TRIO_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"  # пока используем то же фото
+SIMPARICA_TRIO_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
 TIXFLI_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/tixfli.jpg"
 
 # ========== ТОВАРЫ ==========
@@ -83,56 +83,17 @@ TIXFLI = [
     {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": TIXFLI_PHOTO},
 ]
 
-# Общий список всех товаров
 ALL_PRODUCTS_LIST = BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI
-
-# Словарь для быстрого поиска по ID
 ALL_PRODUCTS = {}
 for item in ALL_PRODUCTS_LIST:
     ALL_PRODUCTS[item["id"]] = item
 
-# Словарь категорий
 CATEGORIES = {
-    "bravecto_tablets": {
-        "name": "🟢 Бравекто (таблетки)",
-        "short_name": "Бравекто таблетки",
-        "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
-        "photo": BRAVECTO_TABLETS_PHOTO,
-        "products": BRAVECTO_TABLETS,
-        "keywords": ["бравекто таблетки", "bravecto tablets"]
-    },
-    "bravecto_drops": {
-        "name": "🟢 Бравекто (капли)",
-        "short_name": "Бравекто капли",
-        "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
-        "photo": BRAVECTO_DROPS_PHOTO,
-        "products": BRAVECTO_DROPS,
-        "keywords": ["бравекто капли", "bravecto drops"]
-    },
-    "simparica": {
-        "name": "🟠 Симпарика",
-        "short_name": "Симпарика",
-        "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
-        "photo": SIMPARICA_PHOTO,
-        "products": SIMPARICA,
-        "keywords": ["симпарика", "simparica"]
-    },
-    "simparica_trio": {
-        "name": "🟠 Симпарика ТРИО",
-        "short_name": "Симпарика ТРИО",
-        "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
-        "photo": SIMPARICA_TRIO_PHOTO,
-        "products": SIMPARICA_TRIO,
-        "keywords": ["симпарика трио", "simparica trio"]
-    },
-    "tixfli": {
-        "name": "🔵 Тиксфли",
-        "short_name": "Тиксфли",
-        "desc": "✅ Защита от блох и клещей",
-        "photo": TIXFLI_PHOTO,
-        "products": TIXFLI,
-        "keywords": ["тиксфли", "tixfli"]
-    }
+    "bravecto_tablets": {"name": "🟢 Бравекто (таблетки)", "short_name": "Бравекто таблетки", "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка", "photo": BRAVECTO_TABLETS_PHOTO, "products": BRAVECTO_TABLETS, "keywords": ["бравекто таблетки", "bravecto tablets"]},
+    "bravecto_drops": {"name": "🟢 Бравекто (капли)", "short_name": "Бравекто капли", "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель", "photo": BRAVECTO_DROPS_PHOTO, "products": BRAVECTO_DROPS, "keywords": ["бравекто капли", "bravecto drops"]},
+    "simparica": {"name": "🟠 Симпарика", "short_name": "Симпарика", "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней", "photo": SIMPARICA_PHOTO, "products": SIMPARICA, "keywords": ["симпарика", "simparica"]},
+    "simparica_trio": {"name": "🟠 Симпарика ТРИО", "short_name": "Симпарика ТРИО", "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки", "photo": SIMPARICA_TRIO_PHOTO, "products": SIMPARICA_TRIO, "keywords": ["симпарика трио", "simparica trio"]},
+    "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
 carts = {}
@@ -182,7 +143,6 @@ def decrease_stock(product_id, quantity):
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
 
-# ========== КЛАВИАТУРЫ ==========
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
@@ -257,7 +217,6 @@ def faq_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-# ========== ПРИВЕТСТВИЕ ==========
 @dp.message(Command("start"))
 async def start(message: Message):
     welcome_text = """🐾 *VetProfil* 
@@ -285,7 +244,6 @@ async def admin_panel(message: Message):
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
 
-# ========== ПОИСК ==========
 @dp.callback_query(F.data == "search")
 async def search_start(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(
@@ -400,7 +358,6 @@ async def search_go_to_category(call: CallbackQuery):
         await call.message.answer(text, parse_mode="Markdown", reply_markup=category_buttons(category_key, category_data['products']))
     await call.answer()
 
-# ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
 async def faq(call: CallbackQuery):
     faq_text = """❓ *ЧАСТЫЕ ВОПРОСЫ*
@@ -449,7 +406,6 @@ async def faq(call: CallbackQuery):
     await call.message.edit_text(faq_text, parse_mode="Markdown", reply_markup=faq_menu())
     await call.answer()
 
-# ========== АДМИН ==========
 @dp.callback_query(F.data == "admin_stock")
 async def admin_show_stock(call: CallbackQuery):
     if not is_admin(call.from_user.id):
@@ -650,13 +606,13 @@ async def admin_back(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== КАТАЛОГ ==========
 @dp.callback_query(F.data == "catalog")
 async def catalog(call: CallbackQuery):
     await call.message.answer("📁 *ВЫБЕРИТЕ ТОВАР:*", parse_mode="Markdown", reply_markup=catalog_menu())
     await call.message.delete()
     await call.answer()
 
+# ========== ОСНОВНЫЕ ФУНКЦИИ ПОКАЗА ТОВАРОВ (ИСПРАВЛЕНЫ) ==========
 @dp.callback_query(F.data == "show_bravecto_tablets")
 async def show_bravecto_tablets(call: CallbackQuery):
     text = "*🟢 Бравекто (таблетки) / Bravecto (tablets)*\n\n"
@@ -668,6 +624,7 @@ async def show_bravecto_tablets(call: CallbackQuery):
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
+    await call.message.delete()
     await call.message.answer_photo(
         photo=BRAVECTO_TABLETS_PHOTO,
         caption=text,
@@ -687,6 +644,7 @@ async def show_bravecto_drops(call: CallbackQuery):
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
+    await call.message.delete()
     await call.message.answer_photo(
         photo=BRAVECTO_DROPS_PHOTO,
         caption=text,
@@ -706,6 +664,7 @@ async def show_simparica(call: CallbackQuery):
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
+    await call.message.delete()
     await call.message.answer_photo(
         photo=SIMPARICA_PHOTO,
         caption=text,
@@ -725,6 +684,7 @@ async def show_simparica_trio(call: CallbackQuery):
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
+    await call.message.delete()
     await call.message.answer_photo(
         photo=SIMPARICA_TRIO_PHOTO,
         caption=text,
@@ -744,6 +704,7 @@ async def show_tixfli(call: CallbackQuery):
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
+    await call.message.delete()
     await call.message.answer_photo(
         photo=TIXFLI_PHOTO,
         caption=text,
@@ -752,7 +713,6 @@ async def show_tixfli(call: CallbackQuery):
     )
     await call.answer()
 
-# ========== ДОБАВЛЕНИЕ В КОРЗИНУ ==========
 @dp.callback_query(F.data.startswith("add_"))
 async def add_to_cart(call: CallbackQuery):
     product_id = int(call.data.split("_")[1])
@@ -783,7 +743,6 @@ async def add_to_cart(call: CallbackQuery):
     
     await call.answer(f"✅ {product['name_ru']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
 
-# ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
 async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
@@ -813,7 +772,6 @@ async def clear_cart(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
@@ -877,7 +835,6 @@ async def get_pickup_point(message: Message, state: FSMContext):
         await state.clear()
         return
     
-    # Проверяем остатки
     for product_id, item in cart.items():
         product = get_product(int(product_id))
         if product and item['qty'] > product['stock']:
@@ -885,14 +842,12 @@ async def get_pickup_point(message: Message, state: FSMContext):
             await state.clear()
             return
     
-    # Уменьшаем остатки
     for product_id, item in cart.items():
         decrease_stock(int(product_id), item['qty'])
     
     total = sum(item['price'] * item['qty'] for item in cart.values())
     total_items = sum(item['qty'] for item in cart.values())
     
-    # Формируем заказ
     order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
     order_text += f"👤 ФИО: {data['fullname']}\n"
     order_text += f"🔹 Username: @{username}\n"
@@ -908,13 +863,11 @@ async def get_pickup_point(message: Message, state: FSMContext):
     order_text += f"\n💰 ИТОГО: {total} руб.\n"
     order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
     
-    # Отправляем заказ в чат
     try:
         await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    # Очищаем корзину
     carts[user_id] = {}
     await state.clear()
     
