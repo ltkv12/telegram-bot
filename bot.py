@@ -36,45 +36,60 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ (ВРЕМЕННЫЕ ФОТО, РАБОТАЮТ) ==========
+# Фото для Бравекто (горизонтальные)
+BRAVECTO_PHOTO = "https://i.imgur.com/5Q8k3lB.jpg"
+# Фото для Симпарика
+SIMPARICA_PHOTO = "https://i.imgur.com/WK9qP5c.jpg"
+# Фото для Тиксфли
+TIXFLI_PHOTO = "https://i.imgur.com/8Qk3lB.jpg"
+
 BRAVECTO_TABLETS = [
-    {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
+    {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "photo": BRAVECTO_PHOTO},
+    {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "photo": BRAVECTO_PHOTO},
+    {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "photo": BRAVECTO_PHOTO},
+    {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "photo": BRAVECTO_PHOTO},
+    {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": BRAVECTO_PHOTO},
 ]
 
 BRAVECTO_DROPS = [
-    {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
-    {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "photo": "https://i.imgur.com/5Q8k3lB.jpg"},
+    {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "photo": BRAVECTO_PHOTO},
+    {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "photo": BRAVECTO_PHOTO},
 ]
 
 SIMPARICA = [
-    {"id": 8, "name_ru": "Симпарика 1.3-2.5 кг", "name_en": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 9, "name_ru": "Симпарика 2.5-5 кг", "name_en": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 10, "name_ru": "Симпарика 5-10 кг", "name_en": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 11, "name_ru": "Симпарика 10-20 кг", "name_en": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 12, "name_ru": "Симпарика 20-40 кг", "name_en": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 13, "name_ru": "Симпарика 40-60 кг", "name_en": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
+    {"id": 8, "name_ru": "Симпарика 1.3-2.5 кг", "name_en": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8, "photo": SIMPARICA_PHOTO},
+    {"id": 9, "name_ru": "Симпарика 2.5-5 кг", "name_en": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10, "photo": SIMPARICA_PHOTO},
+    {"id": 10, "name_ru": "Симпарика 5-10 кг", "name_en": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12, "photo": SIMPARICA_PHOTO},
+    {"id": 11, "name_ru": "Симпарика 10-20 кг", "name_en": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9, "photo": SIMPARICA_PHOTO},
+    {"id": 12, "name_ru": "Симпарика 20-40 кг", "name_en": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7, "photo": SIMPARICA_PHOTO},
+    {"id": 13, "name_ru": "Симпарика 40-60 кг", "name_en": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5, "photo": SIMPARICA_PHOTO},
 ]
 
 SIMPARICA_TRIO = [
-    {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
-    {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": "https://i.imgur.com/WK9qP5c.jpg"},
+    {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "photo": SIMPARICA_PHOTO},
+    {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "photo": SIMPARICA_PHOTO},
+    {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "photo": SIMPARICA_PHOTO},
+    {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "photo": SIMPARICA_PHOTO},
+    {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "photo": SIMPARICA_PHOTO},
+    {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": SIMPARICA_PHOTO},
 ]
 
 TIXFLI = [
-    {"id": 20, "name_ru": "Тиксфли 2-4.5 кг", "name_en": "Tixfli 2-4.5 kg", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
-    {"id": 21, "name_ru": "Тиксфли 4.5-10 кг", "name_en": "Tixfli 4.5-10 kg", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
-    {"id": 22, "name_ru": "Тиксфли 10-20 кг", "name_en": "Tixfli 10-20 kg", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
-    {"id": 23, "name_ru": "Тиксфли 20-40 кг", "name_en": "Tixfli 20-40 kg", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
-    {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": "https://i.imgur.com/8Qk3lB.jpg"},
+    {"id": 20, "name_ru": "Тиксфли 2-4.5 кг", "name_en": "Tixfli 2-4.5 kg", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15, "photo": TIXFLI_PHOTO},
+    {"id": 21, "name_ru": "Тиксфли 4.5-10 кг", "name_en": "Tixfli 4.5-10 kg", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12, "photo": TIXFLI_PHOTO},
+    {"id": 22, "name_ru": "Тиксфли 10-20 кг", "name_en": "Tixfli 10-20 kg", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10, "photo": TIXFLI_PHOTO},
+    {"id": 23, "name_ru": "Тиксфли 20-40 кг", "name_en": "Tixfli 20-40 kg", "weight": "20-40 кг", "price": 2700, "expiry": "12.2026", "stock": 8, "photo": TIXFLI_PHOTO},
+    {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": TIXFLI_PHOTO},
 ]
+
+# Общий список всех товаров
+ALL_PRODUCTS_LIST = BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI
+
+# Словарь для быстрого поиска по ID
+ALL_PRODUCTS = {}
+for item in ALL_PRODUCTS_LIST:
+    ALL_PRODUCTS[item["id"]] = item
 
 # Словарь категорий
 CATEGORIES = {
@@ -82,23 +97,23 @@ CATEGORIES = {
         "name": "🟢 Бравекто (таблетки)",
         "short_name": "Бравекто таблетки",
         "desc": "✅ Надежная защита от блох и клещей на 12 недель\n💊 Одна таблетка",
-        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
+        "photo": BRAVECTO_PHOTO,
         "products": BRAVECTO_TABLETS,
-        "keywords": ["бравекто таблетки", "bravecto tablets", "bravecto таблетки"]
+        "keywords": ["бравекто таблетки", "bravecto tablets"]
     },
     "bravecto_drops": {
         "name": "🟢 Бравекто (капли)",
         "short_name": "Бравекто капли",
         "desc": "✅ Капли от блох и клещей\n💊 Защита на 12 недель",
-        "photo": "https://i.imgur.com/5Q8k3lB.jpg",
+        "photo": BRAVECTO_PHOTO,
         "products": BRAVECTO_DROPS,
-        "keywords": ["бравекто капли", "bravecto drops", "bravecto капли"]
+        "keywords": ["бравекто капли", "bravecto drops"]
     },
     "simparica": {
         "name": "🟠 Симпарика",
         "short_name": "Симпарика",
         "desc": "✅ Надежная защита от блох и клещей\n💊 1 таблетка на 30 дней",
-        "photo": "https://i.imgur.com/WK9qP5c.jpg",
+        "photo": SIMPARICA_PHOTO,
         "products": SIMPARICA,
         "keywords": ["симпарика", "simparica"]
     },
@@ -106,7 +121,7 @@ CATEGORIES = {
         "name": "🟠 Симпарика ТРИО",
         "short_name": "Симпарика ТРИО",
         "desc": "✅ Уничтожает блох и клещей\n✅ Предотвращает дирофиляриоз\n✅ Лечит и контролирует круглых и анкилостом\n💊 3 таблетки",
-        "photo": "https://i.imgur.com/WK9qP5c.jpg",
+        "photo": SIMPARICA_PHOTO,
         "products": SIMPARICA_TRIO,
         "keywords": ["симпарика трио", "simparica trio"]
     },
@@ -114,17 +129,11 @@ CATEGORIES = {
         "name": "🔵 Тиксфли",
         "short_name": "Тиксфли",
         "desc": "✅ Защита от блох и клещей",
-        "photo": "https://i.imgur.com/8Qk3lB.jpg",
+        "photo": TIXFLI_PHOTO,
         "products": TIXFLI,
         "keywords": ["тиксфли", "tixfli"]
     }
 }
-
-# Общий словарь всех товаров по ID
-ALL_PRODUCTS = {}
-for cat in CATEGORIES.values():
-    for product in cat["products"]:
-        ALL_PRODUCTS[product["id"]] = product
 
 carts = {}
 
@@ -135,20 +144,16 @@ def get_product(product_id):
     return ALL_PRODUCTS.get(product_id)
 
 def search_categories(query):
-    """Поиск категорий по ключевым словам"""
     query_lower = query.lower().strip()
-    found_categories = []
-    
-    # Специальная обработка для "бравекто" (без уточнения)
     if query_lower in ["бравекто", "bravecto"]:
         return ["bravecto_tablets", "bravecto_drops"]
-    
+    found = []
     for cat_key, cat_data in CATEGORIES.items():
         for keyword in cat_data["keywords"]:
             if keyword in query_lower:
-                found_categories.append(cat_key)
+                found.append(cat_key)
                 break
-    return found_categories
+    return found
 
 def update_product_price(product_id, new_price):
     if product_id in ALL_PRODUCTS:
@@ -213,13 +218,6 @@ def catalog_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
-def product_buttons(product_id):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ В КОРЗИНУ", callback_data=f"add_{product_id}")],
-        [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
-        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="catalog")]
-    ])
-
 def category_buttons(category_key, products):
     buttons = []
     for p in products:
@@ -229,7 +227,6 @@ def category_buttons(category_key, products):
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def search_result_menu():
-    """Меню выбора категории при поиске 'Бравекто'"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🟢 Бравекто (таблетки)", callback_data="search_go_bravecto_tablets")],
         [InlineKeyboardButton(text="🟢 Бравекто (капли)", callback_data="search_go_bravecto_drops")],
@@ -314,38 +311,29 @@ async def search_products_handler(message: Message, state: FSMContext):
     
     query_lower = query.lower()
     
-    # Специальная обработка для "бравекто" - показываем выбор между таблетками и каплями
     if query_lower in ["бравекто", "bravecto"]:
         text = "🔍 *По запросу \"Бравекто\" найдено несколько категорий:*\n\n"
         text += "• 🟢 Бравекто (таблетки)\n"
         text += "• 🟢 Бравекто (капли)\n\n"
         text += "👇 *ВЫБЕРИТЕ НУЖНУЮ ФОРМУ* 👇"
         
-        await message.answer(
-            text,
-            parse_mode="Markdown",
-            reply_markup=search_result_menu()
-        )
+        await message.answer(text, parse_mode="Markdown", reply_markup=search_result_menu())
         await state.clear()
         return
     
-    # Ищем категории по запросу
     found_categories = search_categories(query)
     
     if not found_categories:
         variants = "🔍 *По вашему запросу ничего не найдено.*\n\n"
         variants += "Попробуйте один из вариантов:\n"
         variants += "• Бравекто / Bravecto\n"
-        variants += "• Бравекто капли / Bravecto drops\n"
         variants += "• Симпарика / Simparica\n"
-        variants += "• Симпарика трио / Simparica trio\n"
         variants += "• Тиксфли / Tixfli"
         
         await message.answer(variants, parse_mode="Markdown", reply_markup=faq_menu())
         await state.clear()
         return
     
-    # Если найдена одна категория - открываем её сразу
     if len(found_categories) == 1:
         cat_key = found_categories[0]
         cat_data = CATEGORIES[cat_key]
@@ -366,13 +354,8 @@ async def search_products_handler(message: Message, state: FSMContext):
                 reply_markup=category_buttons(cat_key, cat_data['products'])
             )
         except:
-            await message.answer(
-                text,
-                parse_mode="Markdown",
-                reply_markup=category_buttons(cat_key, cat_data['products'])
-            )
+            await message.answer(text, parse_mode="Markdown", reply_markup=category_buttons(cat_key, cat_data['products']))
     else:
-        # Если найдено несколько категорий - показываем меню выбора
         text = f"🔍 *По запросу \"{query}\" найдено несколько категорий:*\n\n"
         for cat_key in found_categories:
             text += f"• {CATEGORIES[cat_key]['short_name']}\n"
@@ -384,11 +367,7 @@ async def search_products_handler(message: Message, state: FSMContext):
         buttons.append([InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")])
         buttons.append([InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")])
         
-        await message.answer(
-            text,
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
-        )
+        await message.answer(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
     
     await state.clear()
 
@@ -418,11 +397,7 @@ async def search_go_to_category(call: CallbackQuery):
             reply_markup=category_buttons(category_key, category_data['products'])
         )
     except:
-        await call.message.answer(
-            text,
-            parse_mode="Markdown",
-            reply_markup=category_buttons(category_key, category_data['products'])
-        )
+        await call.message.answer(text, parse_mode="Markdown", reply_markup=category_buttons(category_key, category_data['products']))
     await call.answer()
 
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
@@ -482,7 +457,6 @@ async def admin_show_stock(call: CallbackQuery):
         return
     
     text = "📊 *ВСЕ ТОВАРЫ:*\n\n"
-    
     for cat_key, cat_data in CATEGORIES.items():
         text += f"📁 *{cat_data['short_name']}*\n"
         for p in cat_data['products']:
@@ -695,7 +669,7 @@ async def show_bravecto_tablets(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo="https://i.imgur.com/5Q8k3lB.jpg",
+        photo=BRAVECTO_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("bravecto_tablets", BRAVECTO_TABLETS)
@@ -714,7 +688,7 @@ async def show_bravecto_drops(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo="https://i.imgur.com/5Q8k3lB.jpg",
+        photo=BRAVECTO_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("bravecto_drops", BRAVECTO_DROPS)
@@ -733,7 +707,7 @@ async def show_simparica(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo="https://i.imgur.com/WK9qP5c.jpg",
+        photo=SIMPARICA_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("simparica", SIMPARICA)
@@ -752,7 +726,7 @@ async def show_simparica_trio(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo="https://i.imgur.com/WK9qP5c.jpg",
+        photo=SIMPARICA_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("simparica_trio", SIMPARICA_TRIO)
@@ -771,7 +745,7 @@ async def show_tixfli(call: CallbackQuery):
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
     
     await call.message.answer_photo(
-        photo="https://i.imgur.com/8Qk3lB.jpg",
+        photo=TIXFLI_PHOTO,
         caption=text,
         parse_mode="Markdown",
         reply_markup=category_buttons("tixfli", TIXFLI)
