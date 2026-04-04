@@ -40,7 +40,7 @@ class AdminStates(StatesGroup):
 BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
 BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
 SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
-SIMPARICA_TRIO_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/%D1%81%D0%B8%D0%BC%D0%BF%D0%B0%D1%80%D0%B8%D0%BA%D0%B0%20%D1%82%D1%80%D0%B8%D0%BE.jpg"
+SIMPARICA_TRIO_PHOTO = "https://github.com/ltkv12/telegram-bot/blob/main/images/simparica%20trio.jpg"
 TIXFLI_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/tixfli.jpg"
 
 # ========== ТОВАРЫ ==========
