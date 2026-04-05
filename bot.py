@@ -1,7 +1,6 @@
 import asyncio
 import os
 import re
-import json
 import sqlite3
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
@@ -20,7 +19,6 @@ DB_PATH = "products.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY,
@@ -33,14 +31,6 @@ def init_db():
             photo TEXT
         )
     ''')
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS carts (
-            user_id INTEGER PRIMARY KEY,
-            items TEXT
-        )
-    ''')
-    
     conn.commit()
     conn.close()
     print("✅ База данных инициализирована")
@@ -91,30 +81,6 @@ def load_all_products_from_db():
         products[row['id']] = dict(row)
     return products
 
-# ========== ФУНКЦИИ ДЛЯ КОРЗИНЫ ==========
-def save_cart_to_db(user_id, cart):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('INSERT OR REPLACE INTO carts (user_id, items) VALUES (?, ?)',
-                   (user_id, json.dumps(cart, ensure_ascii=False)))
-    conn.commit()
-    conn.close()
-
-def load_cart_from_db(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT items FROM carts WHERE user_id = ?', (user_id,))
-    result = cursor.fetchone()
-    conn.close()
-    return json.loads(result[0]) if result else {}
-
-def delete_cart_from_db(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM carts WHERE user_id = ?', (user_id,))
-    conn.commit()
-    conn.close()
-
 # ========== ID ==========
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 ADMINS_IDS = [int(id.strip()) for id in os.environ.get("ADMINS_IDS", str(OWNER_ID)).split(",") if id.strip()]
@@ -139,7 +105,7 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ (НАЧАЛЬНЫЕ ДАННЫЕ) ==========
 BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
 BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
 SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
@@ -194,6 +160,8 @@ SIMPARICA = [ALL_PRODUCTS[i] for i in range(8, 14)]
 SIMPARICA_TRIO = [ALL_PRODUCTS[i] for i in range(14, 20)]
 TIXFLI = [ALL_PRODUCTS[i] for i in range(20, 25)]
 
+carts = {}
+
 def is_admin(user_id):
     return user_id in ADMINS_IDS
 
@@ -247,11 +215,6 @@ def main_menu():
         [InlineKeyboardButton(text="🔍 ПОИСК", callback_data="search")],
         [InlineKeyboardButton(text="🛒 КОРЗИНА", callback_data="show_cart")],
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
-    ])
-
-def start_button():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
     ])
 
 def admin_menu():
@@ -339,10 +302,12 @@ CATEGORIES = {
     "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
-# ========== ОСНОВНЫЕ ОБРАБОТЧИКИ ==========
+# ========== ПРИВЕТСТВИЕ С КНОПКОЙ СТАРТ ==========
 @dp.message(Command("start"))
-async def start_command(message: Message, state: FSMContext):
-    await state.clear()
+async def start(message: Message):
+    start_button = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
+    ])
     
     welcome_text = """🐾 *VetProfil* 
 
@@ -360,7 +325,7 @@ async def start_command(message: Message, state: FSMContext):
 
 👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
     
-    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button())
+    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button)
 
 @dp.callback_query(F.data == "start_bot")
 async def start_bot(call: CallbackQuery):
@@ -378,15 +343,6 @@ async def admin_panel(message: Message):
         await message.answer("⛔ Нет доступа")
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
-
-@dp.message(Command("cancel"))
-async def cancel_action(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer(
-        "✅ Действие отменено!\n\n"
-        "Нажмите кнопку ниже для продолжения:",
-        reply_markup=start_button()
-    )
 
 # ========== ПОИСК ==========
 @dp.callback_query(F.data == "search")
@@ -653,7 +609,7 @@ async def show_tixfli(call: CallbackQuery):
     )
     await call.answer()
 
-# ========== КОРЗИНА ==========
+# ========== ДОБАВЛЕНИЕ В КОРЗИНУ ==========
 @dp.callback_query(F.data.startswith("add_"))
 async def add_to_cart(call: CallbackQuery):
     product_id = int(call.data.split("_")[1])
@@ -664,39 +620,37 @@ async def add_to_cart(call: CallbackQuery):
         return
     
     user_id = call.from_user.id
-    cart = load_cart_from_db(user_id)
-    current_in_cart = cart.get(product_id, {}).get('qty', 0)
+    current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
     current_stock = get_product_stock(product_id)
     
     if current_in_cart >= current_stock:
         await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {current_stock} шт.", show_alert=True)
         return
     
-    if product_id in cart:
-        cart[product_id]['qty'] += 1
+    if user_id not in carts:
+        carts[user_id] = {}
+    if product_id in carts[user_id]:
+        carts[user_id][product_id]['qty'] += 1
     else:
-        cart[product_id] = {
+        carts[user_id][product_id] = {
             'name': product['name_ru'],
             'price': product['price'],
             'qty': 1,
             'expiry': product['expiry']
         }
     
-    save_cart_to_db(user_id, cart)
-    
-    await call.answer(f"✅ {product['name_ru']}\nВ корзине: {cart[product_id]['qty']} шт.", show_alert=True)
+    await call.answer(f"✅ {product['name_ru']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
 
+# ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
 async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
-    cart = load_cart_from_db(user_id)
-    
+    cart = carts.get(user_id, {})
     if not cart:
         await call.message.answer("🛒 КОРЗИНА ПУСТА", reply_markup=main_menu())
         await call.message.delete()
         await call.answer()
         return
-    
     total = 0
     total_items = 0
     text = "🛒 *ВАША КОРЗИНА*\n\n"
@@ -712,210 +666,8 @@ async def view_cart(call: CallbackQuery):
 
 @dp.callback_query(F.data == "clear_cart")
 async def clear_cart(call: CallbackQuery):
-    delete_cart_from_db(call.from_user.id)
+    carts[call.from_user.id] = {}
     await call.message.answer("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
-    await call.message.delete()
-    await call.answer()
-
-# ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
-@dp.callback_query(F.data == "checkout")
-async def checkout(call: CallbackQuery, state: FSMContext):
-    user_id = call.from_user.id
-    cart = load_cart_from_db(user_id)
-    
-    if not cart:
-        await call.answer("Корзина пуста!", show_alert=True)
-        return
-    
-    await call.message.delete()
-    
-    await call.message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 5\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович",
-        reply_markup=cancel_keyboard()
-    )
-    await state.set_state(OrderForm.waiting_for_fullname)
-    await call.answer()
-
-@dp.message(OrderForm.waiting_for_fullname)
-async def get_fullname(message: Message, state: FSMContext):
-    if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
-        await state.clear()
-        return
-    
-    if len(message.text.strip()) < 5:
-        await message.answer("❌ Введите корректное ФИО (минимум 5 символов):", reply_markup=cancel_keyboard())
-        return
-    
-    await state.update_data(fullname=message.text.strip())
-    await message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 5\n\n🔹 ПОДТВЕРДИТЕ ВАШ USERNAME:\n\nНажмите кнопку ниже для автоматической отправки\nИли введите вручную",
-        reply_markup=username_keyboard()
-    )
-    await state.set_state(OrderForm.waiting_for_username)
-
-@dp.message(OrderForm.waiting_for_username)
-async def get_username(message: Message, state: FSMContext):
-    if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
-        await state.clear()
-        return
-    
-    auto_username = message.from_user.username
-    
-    if message.text == "✅ ПОДТВЕРДИТЬ USERNAME":
-        if auto_username:
-            await state.update_data(username=auto_username)
-            await message.answer(
-                f"✅ Username подтверждён: @{auto_username}\n\n"
-                "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
-                reply_markup=phone_keyboard()
-            )
-            await state.set_state(OrderForm.waiting_for_phone)
-        else:
-            await message.answer(
-                "❌ У вас не установлен username в Telegram!\n\n"
-                "Пожалуйста, введите username вручную или установите его в настройках:",
-                reply_markup=cancel_keyboard()
-            )
-    else:
-        username = message.text.strip()
-        if username.startswith("@"):
-            username = username[1:]
-        if username.lower() == "нет":
-            username = "Не указан"
-        await state.update_data(username=username)
-        await message.answer(
-            f"✅ Username сохранён: @{username}\n\n"
-            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
-            reply_markup=phone_keyboard()
-        )
-        await state.set_state(OrderForm.waiting_for_phone)
-
-@dp.message(OrderForm.waiting_for_phone)
-async def get_phone(message: Message, state: FSMContext):
-    if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
-        await state.clear()
-        return
-    
-    if message.contact:
-        phone = message.contact.phone_number
-        await state.update_data(phone=phone)
-        await message.answer(
-            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:",
-            reply_markup=delivery_menu()
-        )
-        await state.set_state(OrderForm.waiting_for_delivery)
-    else:
-        phone = message.text.strip()
-        if not validate_phone(phone):
-            await message.answer(
-                "❌ НЕВЕРНЫЙ ФОРМАТ!\n\n"
-                "Пожалуйста, введите номер в формате +7XXXXXXXXXX\n"
-                "Или нажмите кнопку ниже для автоматической отправки номера.",
-                reply_markup=phone_keyboard()
-            )
-            return
-        await state.update_data(phone=phone)
-        await message.answer(
-            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:",
-            reply_markup=delivery_menu()
-        )
-        await state.set_state(OrderForm.waiting_for_delivery)
-
-@dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
-async def select_delivery(call: CallbackQuery, state: FSMContext):
-    service = call.data.split("_")[1]
-    if service == "samovyvoz":
-        service = "САМОВЫВОЗ"
-    await state.update_data(delivery=service)
-    
-    await call.message.delete()
-    
-    await call.message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1",
-        reply_markup=cancel_keyboard()
-    )
-    await state.set_state(OrderForm.waiting_for_pickup_point)
-    await call.answer()
-
-@dp.message(OrderForm.waiting_for_pickup_point)
-async def get_pickup_point(message: Message, state: FSMContext):
-    if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
-        await state.clear()
-        return
-    
-    data = await state.get_data()
-    user_id = message.from_user.id
-    cart = load_cart_from_db(user_id)
-    
-    username = data.get('username', 'Не указан')
-    
-    if not cart:
-        await message.answer("❌ Корзина пуста", reply_markup=main_menu())
-        await state.clear()
-        return
-    
-    for product_id, item in cart.items():
-        current_stock = get_product_stock(int(product_id))
-        if item['qty'] > current_stock:
-            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
-            await state.clear()
-            return
-    
-    for product_id, item in cart.items():
-        decrease_stock(int(product_id), item['qty'])
-    
-    total = sum(item['price'] * item['qty'] for item in cart.values())
-    total_items = sum(item['qty'] for item in cart.values())
-    
-    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
-    order_text += f"👤 ФИО: {data['fullname']}\n"
-    order_text += f"🔹 Username: @{username}\n"
-    order_text += f"📱 Телефон: {data['phone']}\n"
-    order_text += f"🆔 ID: {user_id}\n"
-    order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
-    order_text += f"🏠 Пункт выдачи: {message.text}\n\n"
-    order_text += f"📦 ТОВАРЫ:\n"
-    
-    for item in cart.values():
-        order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
-    
-    order_text += f"\n💰 ИТОГО: {total} руб.\n"
-    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
-    
-    try:
-        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
-    except Exception as e:
-        print(f"Ошибка: {e}")
-    
-    delete_cart_from_db(user_id)
-    await state.clear()
-    
-    await message.answer(
-        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
-        f"👤 {data['fullname']}\n"
-        f"🔹 @{username}\n"
-        f"📱 {data['phone']}\n"
-        f"🚚 {data['delivery'].upper()}\n"
-        f"🏠 {message.text}\n"
-        f"💰 {total} руб.\n\n"
-        f"В ближайшее время с Вами свяжутся для согласования заказа.\n\n"
-        f"🐕 Спасибо за покупку!\n\n"
-        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
-        reply_markup=main_menu()
-    )
-
-@dp.callback_query(F.data == "main_back")
-async def main_back(call: CallbackQuery):
-    await call.message.answer(
-        "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
-        parse_mode="Markdown",
-        reply_markup=main_menu()
-    )
     await call.message.delete()
     await call.answer()
 
@@ -1142,11 +894,219 @@ async def admin_back(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
+# ========== ОФОРМЛЕНИЕ ЗАКАЗА С КНОПКАМИ ==========
+@dp.callback_query(F.data == "checkout")
+async def checkout(call: CallbackQuery, state: FSMContext):
+    if not carts.get(call.from_user.id):
+        await call.answer("Корзина пуста!", show_alert=True)
+        return
+    
+    await call.message.delete()
+    
+    await call.message.answer(
+        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 5\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович",
+        reply_markup=cancel_keyboard()
+    )
+    await state.set_state(OrderForm.waiting_for_fullname)
+    await call.answer()
+
+@dp.message(OrderForm.waiting_for_fullname)
+async def get_fullname(message: Message, state: FSMContext):
+    if message.text == "◀️ ОТМЕНА":
+        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await state.clear()
+        return
+    if len(message.text.strip()) < 5:
+        await message.answer("❌ Введите корректное ФИО (минимум 5 символов):", reply_markup=cancel_keyboard())
+        return
+    await state.update_data(fullname=message.text.strip())
+    await message.answer(
+        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 5\n\n🔹 ПОДТВЕРДИТЕ ВАШ USERNAME:\n\nНажмите кнопку ниже для автоматической отправки\nИли введите вручную",
+        reply_markup=username_keyboard()
+    )
+    await state.set_state(OrderForm.waiting_for_username)
+
+@dp.message(OrderForm.waiting_for_username)
+async def get_username(message: Message, state: FSMContext):
+    if message.text == "◀️ ОТМЕНА":
+        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await state.clear()
+        return
+    
+    auto_username = message.from_user.username
+    
+    if message.text == "✅ ПОДТВЕРДИТЬ USERNAME":
+        if auto_username:
+            await state.update_data(username=auto_username)
+            await message.answer(
+                f"✅ Username подтверждён: @{auto_username}\n\n"
+                "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
+                reply_markup=phone_keyboard()
+            )
+            await state.set_state(OrderForm.waiting_for_phone)
+        else:
+            await message.answer(
+                "❌ У вас не установлен username в Telegram!\n\n"
+                "Пожалуйста, установите username в настройках Telegram или введите его вручную:",
+                reply_markup=cancel_keyboard()
+            )
+    else:
+        username = message.text.strip()
+        if username.startswith("@"):
+            username = username[1:]
+        if username.lower() == "нет":
+            username = "Не указан"
+        await state.update_data(username=username)
+        await message.answer(
+            f"✅ Username сохранён: @{username}\n\n"
+            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
+            reply_markup=phone_keyboard()
+        )
+        await state.set_state(OrderForm.waiting_for_phone)
+
+@dp.message(OrderForm.waiting_for_phone)
+async def get_phone(message: Message, state: FSMContext):
+    if message.text == "◀️ ОТМЕНА":
+        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await state.clear()
+        return
+    
+    if message.contact:
+        phone = message.contact.phone_number
+        await state.update_data(phone=phone)
+        await message.answer(
+            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:",
+            reply_markup=delivery_menu()
+        )
+        await state.set_state(OrderForm.waiting_for_delivery)
+    else:
+        phone = message.text.strip()
+        if not validate_phone(phone):
+            await message.answer(
+                "❌ НЕВЕРНЫЙ ФОРМАТ!\n\n"
+                "Пожалуйста, введите номер в формате +7XXXXXXXXXX\n"
+                "Или нажмите кнопку ниже для автоматической отправки номера.",
+                reply_markup=phone_keyboard()
+            )
+            return
+        await state.update_data(phone=phone)
+        await message.answer(
+            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:",
+            reply_markup=delivery_menu()
+        )
+        await state.set_state(OrderForm.waiting_for_delivery)
+
+@dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
+async def select_delivery(call: CallbackQuery, state: FSMContext):
+    service = call.data.split("_")[1]
+    if service == "samovyvoz":
+        service = "САМОВЫВОЗ"
+    await state.update_data(delivery=service)
+    
+    await call.message.delete()
+    
+    await call.message.answer(
+        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1",
+        reply_markup=cancel_keyboard()
+    )
+    await state.set_state(OrderForm.waiting_for_pickup_point)
+    await call.answer()
+
+@dp.message(OrderForm.waiting_for_pickup_point)
+async def get_pickup_point(message: Message, state: FSMContext):
+    if message.text == "◀️ ОТМЕНА":
+        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await state.clear()
+        return
+    
+    data = await state.get_data()
+    user_id = message.from_user.id
+    cart = carts.get(user_id, {})
+    
+    username = data.get('username', 'Не указан')
+    
+    if not cart:
+        await message.answer("❌ Корзина пуста", reply_markup=main_menu())
+        await state.clear()
+        return
+    
+    for product_id, item in cart.items():
+        current_stock = get_product_stock(int(product_id))
+        if item['qty'] > current_stock:
+            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
+            await state.clear()
+            return
+    
+    for product_id, item in cart.items():
+        decrease_stock(int(product_id), item['qty'])
+    
+    total = sum(item['price'] * item['qty'] for item in cart.values())
+    total_items = sum(item['qty'] for item in cart.values())
+    
+    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
+    order_text += f"👤 ФИО: {data['fullname']}\n"
+    order_text += f"🔹 Username: @{username}\n"
+    order_text += f"📱 Телефон: {data['phone']}\n"
+    order_text += f"🆔 ID: {user_id}\n"
+    order_text += f"🚚 Служба: {data['delivery'].upper()}\n"
+    order_text += f"🏠 Пункт выдачи: {message.text}\n\n"
+    order_text += f"📦 ТОВАРЫ:\n"
+    
+    for item in cart.values():
+        order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
+    
+    order_text += f"\n💰 ИТОГО: {total} руб.\n"
+    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
+    
+    try:
+        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    
+    carts[user_id] = {}
+    await state.clear()
+    
+    await message.answer(
+        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
+        f"👤 {data['fullname']}\n"
+        f"🔹 @{username}\n"
+        f"📱 {data['phone']}\n"
+        f"🚚 {data['delivery'].upper()}\n"
+        f"🏠 {message.text}\n"
+        f"💰 {total} руб.\n\n"
+        f"В ближайшее время с Вами свяжутся для согласования заказа.\n\n"
+        f"🐕 Спасибо за покупку!\n\n"
+        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
+        reply_markup=main_menu()
+    )
+
+@dp.callback_query(F.data == "main_back")
+async def main_back(call: CallbackQuery):
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
+    
+    await call.message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
+    await call.message.delete()
+    await call.answer()
+
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
-    print("🛒 Корзина сохраняется в базе данных!")
-    print("🚀 Кнопка 'ЗАПУСТИТЬ БОТА' показывается при каждом /start")
+    print("📱 При запросе номера телефона есть кнопка 'Поделиться номером'")
+    print("👤 Username подтверждается кнопкой")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
