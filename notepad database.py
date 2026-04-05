@@ -60,7 +60,7 @@ def save_all_products(products_dict):
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             product_id,
-            product.get('name', ''),
+            product.get('name_ru', ''),
             product.get('price', 0),
             product.get('stock', 0),
             product.get('expiry', ''),
