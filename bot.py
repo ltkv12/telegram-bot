@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import sqlite3
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
@@ -11,6 +12,80 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+# ========== НАСТРОЙКА БАЗЫ ДАННЫХ ==========
+DB_PATH = "products.db"
+
+def init_db():
+    """Создаёт таблицу с товарами, если её нет"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY,
+            name_ru TEXT NOT NULL,
+            name_en TEXT NOT NULL,
+            price INTEGER NOT NULL,
+            stock INTEGER NOT NULL DEFAULT 0,
+            expiry TEXT,
+            weight TEXT,
+            photo TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    print("✅ База данных инициализирована")
+
+def save_product_to_db(product):
+    """Сохраняет товар в базу"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR REPLACE INTO products (id, name_ru, name_en, price, stock, expiry, weight, photo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (product['id'], product['name_ru'], product['name_en'], 
+          product['price'], product['stock'], product['expiry'], 
+          product['weight'], product['photo']))
+    conn.commit()
+    conn.close()
+
+def get_stock_from_db(product_id):
+    """Получает остаток из базы"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT stock FROM products WHERE id = ?', (product_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else 0
+
+def update_stock_in_db(product_id, new_stock):
+    """Обновляет остаток в базе"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE products SET stock = ? WHERE id = ?', (new_stock, product_id))
+    conn.commit()
+    conn.close()
+
+def decrease_stock_in_db(product_id, quantity):
+    """Уменьшает остаток в базе"""
+    current = get_stock_from_db(product_id)
+    if current >= quantity:
+        update_stock_in_db(product_id, current - quantity)
+        return True
+    return False
+
+def load_all_products_from_db():
+    """Загружает все товары из базы в память"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM products')
+    rows = cursor.fetchall()
+    conn.close()
+    products = {}
+    for row in rows:
+        products[row['id']] = dict(row)
+    return products
 
 # ========== ID ==========
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
@@ -36,45 +111,39 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ ==========
+# ========== ТОВАРЫ (НАЧАЛЬНЫЕ ДАННЫЕ) ==========
 BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
 BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
 SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
 SIMPARICA_TRIO_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica%20trio.jpg"
 TIXFLI_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/tixfli.jpg"
 
-BRAVECTO_TABLETS = [
+# Начальные данные товаров
+INITIAL_PRODUCTS = [
+    # Бравекто таблетки
     {"id": 1, "name_ru": "Бравекто до 5 кг", "name_en": "Bravecto up to 5 kg", "weight": "до 5 кг", "price": 3400, "expiry": "01.2027", "stock": 10, "photo": BRAVECTO_TABLETS_PHOTO},
     {"id": 2, "name_ru": "Бравекто 5-10 кг", "name_en": "Bravecto 5-10 kg", "weight": "5-10 кг", "price": 3500, "expiry": "05.2027", "stock": 8, "photo": BRAVECTO_TABLETS_PHOTO},
     {"id": 3, "name_ru": "Бравекто 10-20 кг", "name_en": "Bravecto 10-20 kg", "weight": "10-20 кг", "price": 3700, "expiry": "05.2027", "stock": 12, "photo": BRAVECTO_TABLETS_PHOTO},
     {"id": 4, "name_ru": "Бравекто 20-40 кг", "name_en": "Bravecto 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 6, "photo": BRAVECTO_TABLETS_PHOTO},
     {"id": 5, "name_ru": "Бравекто 40-56 кг", "name_en": "Bravecto 40-56 kg", "weight": "40-56 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": BRAVECTO_TABLETS_PHOTO},
-]
-
-BRAVECTO_DROPS = [
+    # Бравекто капли
     {"id": 6, "name_ru": "Бравекто капли 5-10 кг", "name_en": "Bravecto drops 5-10 kg", "weight": "5-10 кг", "price": 3700, "expiry": "12.2026", "stock": 7, "photo": BRAVECTO_DROPS_PHOTO},
     {"id": 7, "name_ru": "Бравекто капли 10-20 кг", "name_en": "Bravecto drops 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "12.2026", "stock": 5, "photo": BRAVECTO_DROPS_PHOTO},
-]
-
-SIMPARICA = [
+    # Симпарика
     {"id": 8, "name_ru": "Симпарика 1.3-2.5 кг", "name_en": "Simparica 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "03.2027", "stock": 8, "photo": SIMPARICA_PHOTO},
     {"id": 9, "name_ru": "Симпарика 2.5-5 кг", "name_en": "Simparica 2.5-5 kg", "weight": "2.5-5 кг", "price": 3500, "expiry": "11.2027", "stock": 10, "photo": SIMPARICA_PHOTO},
     {"id": 10, "name_ru": "Симпарика 5-10 кг", "name_en": "Simparica 5-10 kg", "weight": "5-10 кг", "price": 3600, "expiry": "10.2027", "stock": 12, "photo": SIMPARICA_PHOTO},
     {"id": 11, "name_ru": "Симпарика 10-20 кг", "name_en": "Simparica 10-20 kg", "weight": "10-20 кг", "price": 3800, "expiry": "10.2027", "stock": 9, "photo": SIMPARICA_PHOTO},
     {"id": 12, "name_ru": "Симпарика 20-40 кг", "name_en": "Simparica 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "10.2027", "stock": 7, "photo": SIMPARICA_PHOTO},
     {"id": 13, "name_ru": "Симпарика 40-60 кг", "name_en": "Simparica 40-60 kg", "weight": "40-60 кг", "price": 4000, "expiry": "12.2026", "stock": 5, "photo": SIMPARICA_PHOTO},
-]
-
-SIMPARICA_TRIO = [
+    # Симпарика ТРИО
     {"id": 14, "name_ru": "Симпарика ТРИО 1.3-2.5 кг", "name_en": "Simparica TRIO 1.3-2.5 kg", "weight": "1.3-2.5 кг", "price": 3300, "expiry": "02.2027", "stock": 6, "photo": SIMPARICA_TRIO_PHOTO},
     {"id": 15, "name_ru": "Симпарика ТРИО 2.5-5 кг", "name_en": "Simparica TRIO 2.5-5 kg", "weight": "2.5-5 кг", "price": 3300, "expiry": "02.2027", "stock": 8, "photo": SIMPARICA_TRIO_PHOTO},
     {"id": 16, "name_ru": "Симпарика ТРИО 5-10 кг", "name_en": "Simparica TRIO 5-10 kg", "weight": "5-10 кг", "price": 3400, "expiry": "12.2026", "stock": 10, "photo": SIMPARICA_TRIO_PHOTO},
     {"id": 17, "name_ru": "Симпарика ТРИО 10-20 кг", "name_en": "Simparica TRIO 10-20 kg", "weight": "10-20 кг", "price": 3600, "expiry": "03.2027", "stock": 7, "photo": SIMPARICA_TRIO_PHOTO},
     {"id": 18, "name_ru": "Симпарика ТРИО 20-40 кг", "name_en": "Simparica TRIO 20-40 kg", "weight": "20-40 кг", "price": 3900, "expiry": "02.2027", "stock": 5, "photo": SIMPARICA_TRIO_PHOTO},
     {"id": 19, "name_ru": "Симпарика ТРИО 40-60 кг", "name_en": "Simparica TRIO 40-60 kg", "weight": "40-60 кг", "price": 4100, "expiry": "02.2027", "stock": 4, "photo": SIMPARICA_TRIO_PHOTO},
-]
-
-TIXFLI = [
+    # Тиксфли
     {"id": 20, "name_ru": "Тиксфли 2-4.5 кг", "name_en": "Tixfli 2-4.5 kg", "weight": "2-4.5 кг", "price": 2400, "expiry": "12.2026", "stock": 15, "photo": TIXFLI_PHOTO},
     {"id": 21, "name_ru": "Тиксфли 4.5-10 кг", "name_en": "Tixfli 4.5-10 kg", "weight": "4.5-10 кг", "price": 2500, "expiry": "12.2026", "stock": 12, "photo": TIXFLI_PHOTO},
     {"id": 22, "name_ru": "Тиксфли 10-20 кг", "name_en": "Tixfli 10-20 kg", "weight": "10-20 кг", "price": 2600, "expiry": "12.2026", "stock": 10, "photo": TIXFLI_PHOTO},
@@ -82,9 +151,32 @@ TIXFLI = [
     {"id": 24, "name_ru": "Тиксфли 40-56 кг", "name_en": "Tixfli 40-56 kg", "weight": "40-56 кг", "price": 2900, "expiry": "12.2026", "stock": 6, "photo": TIXFLI_PHOTO},
 ]
 
-ALL_PRODUCTS = {}
-for item in BRAVECTO_TABLETS + BRAVECTO_DROPS + SIMPARICA + SIMPARICA_TRIO + TIXFLI:
-    ALL_PRODUCTS[item["id"]] = item
+# ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ
+init_db()
+
+# Проверяем, есть ли товары в базе
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+cursor.execute('SELECT COUNT(*) FROM products')
+count = cursor.fetchone()[0]
+conn.close()
+
+if count == 0:
+    # Если база пустая, сохраняем начальные товары
+    for product in INITIAL_PRODUCTS:
+        save_product_to_db(product)
+    print("✅ Начальные товары сохранены в базу")
+
+# Загружаем товары из базы в память
+ALL_PRODUCTS = load_all_products_from_db()
+print(f"✅ Загружено {len(ALL_PRODUCTS)} товаров из базы")
+
+# ГРУППЫ ТОВАРОВ ДЛЯ КАТАЛОГА
+BRAVECTO_TABLETS = [ALL_PRODUCTS[i] for i in range(1, 6)]
+BRAVECTO_DROPS = [ALL_PRODUCTS[i] for i in range(6, 8)]
+SIMPARICA = [ALL_PRODUCTS[i] for i in range(8, 14)]
+SIMPARICA_TRIO = [ALL_PRODUCTS[i] for i in range(14, 20)]
+TIXFLI = [ALL_PRODUCTS[i] for i in range(20, 25)]
 
 carts = {}
 
@@ -95,36 +187,40 @@ def get_product(product_id):
     return ALL_PRODUCTS.get(product_id)
 
 def get_product_stock(product_id):
-    product = get_product(product_id)
-    return product['stock'] if product else 0
-
-def decrease_stock(product_id, quantity):
-    product = get_product(product_id)
-    if product and product['stock'] >= quantity:
-        product['stock'] -= quantity
-        return True
-    return False
+    return get_stock_from_db(product_id)
 
 def update_product_stock(product_id, new_stock):
-    product = get_product(product_id)
-    if product:
-        product['stock'] = new_stock
+    update_stock_in_db(product_id, new_stock)
+    if product_id in ALL_PRODUCTS:
+        ALL_PRODUCTS[product_id]['stock'] = new_stock
+    return True
+
+def decrease_stock(product_id, quantity):
+    if decrease_stock_in_db(product_id, quantity):
+        if product_id in ALL_PRODUCTS:
+            ALL_PRODUCTS[product_id]['stock'] -= quantity
         return True
     return False
 
 def update_product_price(product_id, new_price):
-    product = get_product(product_id)
-    if product:
-        product['price'] = new_price
-        return True
-    return False
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE products SET price = ? WHERE id = ?', (new_price, product_id))
+    conn.commit()
+    conn.close()
+    if product_id in ALL_PRODUCTS:
+        ALL_PRODUCTS[product_id]['price'] = new_price
+    return True
 
 def update_product_expiry(product_id, new_expiry):
-    product = get_product(product_id)
-    if product:
-        product['expiry'] = new_expiry
-        return True
-    return False
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE products SET expiry = ? WHERE id = ?', (new_expiry, product_id))
+    conn.commit()
+    conn.close()
+    if product_id in ALL_PRODUCTS:
+        ALL_PRODUCTS[product_id]['expiry'] = new_expiry
+    return True
 
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
@@ -305,6 +401,7 @@ async def search_products_handler(message: Message, state: FSMContext):
     text += "*📊 Доступные варианты:*\n"
     
     for p in cat_data['products']:
+        stock = get_product_stock(p['id'])
         text += f"• {p['weight']} - {p['price']}₽ (годен до {p['expiry']})\n"
     
     text += "\n👇 *ВЫБЕРИТЕ НУЖНЫЙ ВЕС* 👇"
@@ -518,7 +615,7 @@ async def add_to_cart(call: CallbackQuery):
     
     user_id = call.from_user.id
     current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
-    current_stock = product['stock']
+    current_stock = get_product_stock(product_id)
     
     if current_in_cart >= current_stock:
         await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {current_stock} шт.", show_alert=True)
@@ -579,23 +676,28 @@ async def admin_show_stock(call: CallbackQuery):
     
     text += "🟢 *Бравекто (таблетки)*\n"
     for p in BRAVECTO_TABLETS:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        stock = get_product_stock(p['id'])
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
     
     text += "\n🟢 *Бравекто (капли)*\n"
     for p in BRAVECTO_DROPS:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        stock = get_product_stock(p['id'])
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
     
     text += "\n🟠 *Симпарика*\n"
     for p in SIMPARICA:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        stock = get_product_stock(p['id'])
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
     
     text += "\n🟠 *Симпарика ТРИО*\n"
     for p in SIMPARICA_TRIO:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        stock = get_product_stock(p['id'])
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
     
     text += "\n🔵 *Тиксфли*\n"
     for p in TIXFLI:
-        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {p['stock']})\n"
+        stock = get_product_stock(p['id'])
+        text += f"   🆔 ID: {p['id']} - {p['name_ru']} / {p['name_en']} - {p['price']}₽ (в наличии: {stock})\n"
     
     await call.message.answer(text, parse_mode="Markdown", reply_markup=admin_menu())
     await call.message.delete()
@@ -632,7 +734,7 @@ async def admin_get_product_id(message: Message, state: FSMContext):
             await message.answer(
                 f"📦 *{product['name_ru']} / {product['name_en']}*\n\n"
                 f"💰 Цена: {product['price']} руб.\n"
-                f"📦 Остаток: {product['stock']} шт.\n"
+                f"📦 Остаток: {get_product_stock(product_id)} шт.\n"
                 f"📅 Срок годности: {product.get('expiry', 'Не указан')}\n\n"
                 f"✏️ *ЧТО ХОТИТЕ ИЗМЕНИТЬ?*",
                 parse_mode="Markdown",
@@ -697,7 +799,7 @@ async def admin_edit_stock(call: CallbackQuery, state: FSMContext):
         await state.update_data(product_id=product_id)
         await call.message.answer(
             f"📦 *{product['name_ru']} / {product['name_en']}*\n"
-            f"📦 Текущий остаток: {product['stock']} шт.\n\n"
+            f"📦 Текущий остаток: {get_product_stock(product_id)} шт.\n\n"
             f"✏️ *ВВЕДИТЕ НОВЫЙ ОСТАТОК (число):*",
             parse_mode="Markdown"
         )
@@ -852,9 +954,9 @@ async def get_pickup_point(message: Message, state: FSMContext):
         return
     
     for product_id, item in cart.items():
-        product = get_product(int(product_id))
-        if product and item['qty'] > product['stock']:
-            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {product['stock']} шт.")
+        current_stock = get_product_stock(int(product_id))
+        if item['qty'] > current_stock:
+            await message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
             await state.clear()
             return
     
@@ -925,6 +1027,7 @@ async def main_back(call: CallbackQuery):
 
 async def main():
     print("🚀 Бот VetProfil запущен!")
+    print("💾 Остатки сохраняются в базе данных SQLite!")
     print("🔍 Поиск: 'Бравекто' покажет таблетки и капли")
     await dp.start_polling(bot)
 
