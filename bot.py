@@ -13,6 +13,13 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# ========== НАСТРОЙКА МЕНЮ КОМАНД ==========
+async def set_commands(bot: Bot):
+    commands = [
+        {"command": "start", "description": "🏠 Главное меню"},
+    ]
+    await bot.set_my_commands(commands)
+
 # ========== ID ==========
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 ADMINS_IDS = [int(id.strip()) for id in os.environ.get("ADMINS_IDS", str(OWNER_ID)).split(",") if id.strip()]
@@ -155,7 +162,7 @@ def update_product_expiry(product_id, new_expiry):
 def validate_phone(phone):
     return re.match(r'^\+7\d{10}$', phone) is not None
 
-# ========== КЛАВИАТУРЫ (те же, что были) ==========
+# ========== КЛАВИАТУРЫ ==========
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❓ ЧАСТЫЕ ВОПРОСЫ", callback_data="faq")],
@@ -730,6 +737,7 @@ async def show_tixfli(call: CallbackQuery):
     )
     await call.answer()
 
+# ========== ДОБАВЛЕНИЕ В КОРЗИНУ ==========
 @dp.callback_query(F.data.startswith("add_"))
 async def add_to_cart(call: CallbackQuery):
     product_id = int(call.data.split("_")[1])
@@ -761,6 +769,7 @@ async def add_to_cart(call: CallbackQuery):
     
     await call.answer(f"✅ {product['name_ru']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
 
+# ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
 async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
@@ -926,6 +935,7 @@ async def main_back(call: CallbackQuery):
     await call.answer()
 
 async def main():
+    await set_commands(bot)
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных!")
     print("🔍 Поиск: 'Бравекто' покажет таблетки и капли")
