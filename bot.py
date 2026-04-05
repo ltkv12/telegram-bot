@@ -345,7 +345,6 @@ async def start_command(message: Message, state: FSMContext):
     # Сбрасываем состояние
     await state.clear()
     
-    # Всегда показываем кнопку "ЗАПУСТИТЬ БОТА"
     welcome_text = """🐾 *VetProfil* 
 
 🐾 *Профессиональные решения для здоровья животных* 
@@ -364,11 +363,19 @@ async def start_command(message: Message, state: FSMContext):
     
     await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button())
 
-# При любом сообщении (если не /start) - тоже показываем кнопку
+# Только если нет активного состояния - показываем кнопку
 @dp.message()
 async def handle_any_message(message: Message, state: FSMContext):
-    # Сбрасываем состояние
-    await state.clear()
+    # Проверяем, есть ли активное состояние
+    current_state = await state.get_state()
+    
+    # Если пользователь в процессе оформления заказа или поиска - не показываем кнопку
+    if current_state:
+        return
+    
+    # Если команда /start - не показываем (уже обработано выше)
+    if message.text and message.text.startswith("/"):
+        return
     
     welcome_text = """🐾 *VetProfil* 
 
@@ -1172,6 +1179,7 @@ async def main():
     print("💾 Остатки сохраняются в базе данных SQLite!")
     print("🛒 Корзина сохраняется в базе данных!")
     print("🚀 Кнопка 'ЗАПУСТИТЬ БОТА' показывается при каждом /start")
+    print("✅ Во время оформления заказа кнопка не мешает")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
