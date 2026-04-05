@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import json
 import sqlite3
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
@@ -22,6 +23,8 @@ DB_PATH = "products.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
+    # Таблица товаров
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY,
@@ -34,6 +37,15 @@ def init_db():
             photo TEXT
         )
     ''')
+    
+    # Таблица корзины
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS carts (
+            user_id INTEGER PRIMARY KEY,
+            items TEXT
+        )
+    ''')
+    
     conn.commit()
     conn.close()
     print("✅ База данных инициализирована")
@@ -83,6 +95,30 @@ def load_all_products_from_db():
     for row in rows:
         products[row['id']] = dict(row)
     return products
+
+# ========== ФУНКЦИИ ДЛЯ РАБОТЫ С КОРЗИНОЙ В БД ==========
+def save_cart_to_db(user_id, cart):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR REPLACE INTO carts (user_id, items) VALUES (?, ?)',
+                   (user_id, json.dumps(cart, ensure_ascii=False)))
+    conn.commit()
+    conn.close()
+
+def load_cart_from_db(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT items FROM carts WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return json.loads(result[0]) if result else {}
+
+def delete_cart_from_db(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM carts WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
 
 # ========== ID ==========
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
@@ -162,8 +198,6 @@ BRAVECTO_DROPS = [ALL_PRODUCTS[i] for i in range(6, 8)]
 SIMPARICA = [ALL_PRODUCTS[i] for i in range(8, 14)]
 SIMPARICA_TRIO = [ALL_PRODUCTS[i] for i in range(14, 20)]
 TIXFLI = [ALL_PRODUCTS[i] for i in range(20, 25)]
-
-carts = {}
 
 def is_admin(user_id):
     return user_id in ADMINS_IDS
@@ -307,7 +341,7 @@ CATEGORIES = {
 
 # ========== ПРИВЕТСТВИЕ ==========
 @dp.message()
-async def handle_any_message(message: Message):
+async def handle_any_message(message: Message, state: FSMContext):
     user_id = message.from_user.id
     
     if user_id in users_seen:
@@ -356,12 +390,16 @@ async def start_bot(call: CallbackQuery):
     await call.answer()
 
 @dp.message(Command("start"))
-async def start_command(message: Message):
+async def start_command(message: Message, state: FSMContext):
+    # Сбрасываем состояние при новом старте
+    await state.clear()
+    
     user_id = message.from_user.id
     
     if user_id in users_seen:
         await message.answer(
-            "🐕 *VetProfil - ветеринарная аптека*\n\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
+            "🐕 *VetProfil - ветеринарная аптека*\n\n"
+            "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
             parse_mode="Markdown",
             reply_markup=main_menu()
         )
@@ -388,6 +426,24 @@ async def start_command(message: Message):
 👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
         
         await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button)
+
+@dp.message(Command("cancel"))
+async def cancel_action(message: Message, state: FSMContext):
+    """Отмена текущего действия"""
+    current_state = await state.get_state()
+    if current_state:
+        await state.clear()
+        await message.answer(
+            "✅ Действие отменено!\n\n"
+            "Вы можете начать заново, выбрав действие в меню.",
+            reply_markup=main_menu()
+        )
+    else:
+        await message.answer(
+            "❌ Нет активных действий для отмены.\n\n"
+            "Используйте кнопки меню для навигации.",
+            reply_markup=main_menu()
+        )
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
@@ -672,37 +728,40 @@ async def add_to_cart(call: CallbackQuery):
         return
     
     user_id = call.from_user.id
-    current_in_cart = carts.get(user_id, {}).get(product_id, {}).get('qty', 0)
+    cart = load_cart_from_db(user_id)
+    current_in_cart = cart.get(product_id, {}).get('qty', 0)
     current_stock = get_product_stock(product_id)
     
     if current_in_cart >= current_stock:
         await call.answer(f"❌ НЕЛЬЗЯ! В наличии: {current_stock} шт.", show_alert=True)
         return
     
-    if user_id not in carts:
-        carts[user_id] = {}
-    if product_id in carts[user_id]:
-        carts[user_id][product_id]['qty'] += 1
+    if product_id in cart:
+        cart[product_id]['qty'] += 1
     else:
-        carts[user_id][product_id] = {
+        cart[product_id] = {
             'name': product['name_ru'],
             'price': product['price'],
             'qty': 1,
             'expiry': product['expiry']
         }
     
-    await call.answer(f"✅ {product['name_ru']}\nВ корзине: {carts[user_id][product_id]['qty']} шт.", show_alert=True)
+    save_cart_to_db(user_id, cart)
+    
+    await call.answer(f"✅ {product['name_ru']}\nВ корзине: {cart[product_id]['qty']} шт.", show_alert=True)
 
 # ========== КОРЗИНА ==========
 @dp.callback_query(F.data == "show_cart")
 async def view_cart(call: CallbackQuery):
     user_id = call.from_user.id
-    cart = carts.get(user_id, {})
+    cart = load_cart_from_db(user_id)
+    
     if not cart:
         await call.message.answer("🛒 КОРЗИНА ПУСТА", reply_markup=main_menu())
         await call.message.delete()
         await call.answer()
         return
+    
     total = 0
     total_items = 0
     text = "🛒 *ВАША КОРЗИНА*\n\n"
@@ -718,7 +777,7 @@ async def view_cart(call: CallbackQuery):
 
 @dp.callback_query(F.data == "clear_cart")
 async def clear_cart(call: CallbackQuery):
-    carts[call.from_user.id] = {}
+    delete_cart_from_db(call.from_user.id)
     await call.message.answer("🗑️ КОРЗИНА ОЧИЩЕНА", reply_markup=main_menu())
     await call.message.delete()
     await call.answer()
@@ -949,7 +1008,10 @@ async def admin_back(call: CallbackQuery):
 # ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
-    if not carts.get(call.from_user.id):
+    user_id = call.from_user.id
+    cart = load_cart_from_db(user_id)
+    
+    if not cart:
         await call.answer("Корзина пуста!", show_alert=True)
         return
     
@@ -1073,7 +1135,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
     
     data = await state.get_data()
     user_id = message.from_user.id
-    cart = carts.get(user_id, {})
+    cart = load_cart_from_db(user_id)
     
     username = data.get('username', 'Не указан')
     
@@ -1115,7 +1177,7 @@ async def get_pickup_point(message: Message, state: FSMContext):
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    carts[user_id] = {}
+    delete_cart_from_db(user_id)
     await state.clear()
     
     await message.answer(
@@ -1157,7 +1219,8 @@ async def main_back(call: CallbackQuery):
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
-    print("👋 При первом сообщении показывается приветствие с кнопкой")
+    print("🛒 Корзина сохраняется в базе данных!")
+    print("❌ Команда /cancel для отмены действий")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
