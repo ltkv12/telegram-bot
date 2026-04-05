@@ -305,23 +305,19 @@ CATEGORIES = {
     "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
-# ========== ПРИВЕТСТВИЕ ПРИ ЛЮБОМ СООБЩЕНИИ ОТ НОВОГО ПОЛЬЗОВАТЕЛЯ ==========
+# ========== ПРИВЕТСТВИЕ ПРИ ЛЮБОМ СООБЩЕНИИ ==========
 @dp.message()
 async def handle_any_message(message: Message):
     user_id = message.from_user.id
     
-    # Если пользователь уже видел приветствие - ничего не делаем
     if user_id in users_seen:
         return
     
-    # Если пользователь ввёл команду start - не показываем дубль
     if message.text and message.text.startswith("/start"):
         return
     
-    # Добавляем пользователя в список увиденных
     users_seen.add(user_id)
     
-    # Показываем приветствие с кнопкой
     start_button = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
     ])
@@ -346,9 +342,15 @@ async def handle_any_message(message: Message):
 
 @dp.callback_query(F.data == "start_bot")
 async def start_bot(call: CallbackQuery):
+    new_text = "🐕 *VetProfil - ветеринарная аптека*\n\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"
+    
+    # Проверяем, чтобы не редактировать одно и то же сообщение
+    if call.message.text == new_text:
+        await call.answer("Вы уже в главном меню!")
+        return
+    
     await call.message.edit_text(
-        "🐕 *VetProfil - ветеринарная аптека*\n\n"
-        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
+        new_text,
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
@@ -356,8 +358,9 @@ async def start_bot(call: CallbackQuery):
 
 @dp.message(Command("start"))
 async def start_command(message: Message):
-    # Если пользователь уже видел приветствие - сразу показываем меню
-    if message.from_user.id in users_seen:
+    user_id = message.from_user.id
+    
+    if user_id in users_seen:
         await message.answer(
             "🐕 *VetProfil - ветеринарная аптека*\n\n"
             "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
@@ -365,8 +368,7 @@ async def start_command(message: Message):
             reply_markup=main_menu()
         )
     else:
-        # Новый пользователь - показываем приветствие
-        users_seen.add(message.from_user.id)
+        users_seen.add(user_id)
         start_button = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
         ])
