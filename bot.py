@@ -14,9 +14,6 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# ========== ОТСЛЕЖИВАНИЕ НОВЫХ ПОЛЬЗОВАТЕЛЕЙ ==========
-users_seen = set()
-
 # ========== НАСТРОЙКА БАЗЫ ДАННЫХ ==========
 DB_PATH = "products.db"
 
@@ -43,6 +40,14 @@ def init_db():
         CREATE TABLE IF NOT EXISTS carts (
             user_id INTEGER PRIMARY KEY,
             items TEXT
+        )
+    ''')
+    
+    # Таблица пользователей (кто видел приветствие)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            seen INTEGER DEFAULT 0
         )
     ''')
     
@@ -117,6 +122,22 @@ def delete_cart_from_db(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('DELETE FROM carts WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+
+# ========== ФУНКЦИИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ==========
+def is_user_seen(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT seen FROM users WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] == 1 if result else False
+
+def mark_user_seen(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR REPLACE INTO users (user_id, seen) VALUES (?, 1)', (user_id,))
     conn.commit()
     conn.close()
 
@@ -344,13 +365,13 @@ CATEGORIES = {
 async def handle_any_message(message: Message, state: FSMContext):
     user_id = message.from_user.id
     
-    if user_id in users_seen:
+    if is_user_seen(user_id):
         return
     
     if message.text and message.text.startswith("/start"):
         return
     
-    users_seen.add(user_id)
+    mark_user_seen(user_id)
     
     start_button = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
@@ -391,12 +412,11 @@ async def start_bot(call: CallbackQuery):
 
 @dp.message(Command("start"))
 async def start_command(message: Message, state: FSMContext):
-    # Сбрасываем состояние при новом старте
     await state.clear()
     
     user_id = message.from_user.id
     
-    if user_id in users_seen:
+    if is_user_seen(user_id):
         await message.answer(
             "🐕 *VetProfil - ветеринарная аптека*\n\n"
             "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
@@ -404,7 +424,7 @@ async def start_command(message: Message, state: FSMContext):
             reply_markup=main_menu()
         )
     else:
-        users_seen.add(user_id)
+        mark_user_seen(user_id)
         start_button = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
         ])
@@ -429,7 +449,6 @@ async def start_command(message: Message, state: FSMContext):
 
 @dp.message(Command("cancel"))
 async def cancel_action(message: Message, state: FSMContext):
-    """Отмена текущего действия"""
     current_state = await state.get_state()
     if current_state:
         await state.clear()
@@ -1220,6 +1239,7 @@ async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
     print("🛒 Корзина сохраняется в базе данных!")
+    print("👥 Пользователи сохраняются в базе данных!")
     print("❌ Команда /cancel для отмены действий")
     await dp.start_polling(bot)
 
