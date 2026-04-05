@@ -890,17 +890,19 @@ async def admin_back(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ЗАКАЗА С КНОПКОЙ ТЕЛЕФОНА ==========
+# ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
         await call.answer("Корзина пуста!", show_alert=True)
         return
+    
+    await call.message.delete()
+    
     await call.message.answer(
         "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 1 из 5\n\n✏️ ВВЕДИТЕ ВАШЕ ПОЛНОЕ ФИО:\n\nНапример: Иванов Иван Иванович",
         reply_markup=cancel_keyboard()
     )
-    await call.message.delete()
     await state.set_state(OrderForm.waiting_for_fullname)
     await call.answer()
 
@@ -911,7 +913,7 @@ async def get_fullname(message: Message, state: FSMContext):
         await state.clear()
         return
     if len(message.text.strip()) < 5:
-        await message.answer("❌ Введите корректное ФИО (минимум 5 символов):")
+        await message.answer("❌ Введите корректное ФИО (минимум 5 символов):", reply_markup=cancel_keyboard())
         return
     await state.update_data(fullname=message.text.strip())
     await message.answer(
@@ -932,6 +934,7 @@ async def get_username(message: Message, state: FSMContext):
     if username.lower() == "нет":
         username = "Не указан"
     await state.update_data(username=username)
+    
     await message.answer(
         "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
         reply_markup=phone_keyboard()
@@ -976,11 +979,13 @@ async def select_delivery(call: CallbackQuery, state: FSMContext):
     if service == "samovyvoz":
         service = "САМОВЫВОЗ"
     await state.update_data(delivery=service)
+    
+    await call.message.delete()
+    
     await call.message.answer(
         "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1",
         reply_markup=cancel_keyboard()
     )
-    await call.message.delete()
     await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
@@ -1038,7 +1043,6 @@ async def get_pickup_point(message: Message, state: FSMContext):
     carts[user_id] = {}
     await state.clear()
     
-    # Убираем клавиатуру
     await message.answer(
         f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
         f"👤 {data['fullname']}\n"
