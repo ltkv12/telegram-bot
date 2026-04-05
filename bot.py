@@ -286,6 +286,10 @@ def phone_keyboard():
     button = KeyboardButton(text="📱 Поделиться номером", request_contact=True)
     return ReplyKeyboardMarkup(keyboard=[[button]], resize_keyboard=True, one_time_keyboard=True)
 
+def username_keyboard():
+    button = KeyboardButton(text="✅ ПОДТВЕРДИТЬ USERNAME")
+    return ReplyKeyboardMarkup(keyboard=[[button]], resize_keyboard=True, one_time_keyboard=True)
+
 def cancel_keyboard():
     button = KeyboardButton(text="◀️ ОТМЕНА")
     return ReplyKeyboardMarkup(keyboard=[[button]], resize_keyboard=True)
@@ -890,7 +894,7 @@ async def admin_back(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
+# ========== ОФОРМЛЕНИЕ ЗАКАЗА С КНОПКАМИ ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
@@ -917,8 +921,8 @@ async def get_fullname(message: Message, state: FSMContext):
         return
     await state.update_data(fullname=message.text.strip())
     await message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 5\n\n🔹 ВВЕДИТЕ ВАШ USERNAME В TELEGRAM:\n\nВ формате: @username\n\nЕсли нет username, введите 'Нет'",
-        reply_markup=cancel_keyboard()
+        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 2 из 5\n\n🔹 ПОДТВЕРДИТЕ ВАШ USERNAME:\n\nНажмите кнопку ниже для автоматической отправки\nИли введите вручную",
+        reply_markup=username_keyboard()
     )
     await state.set_state(OrderForm.waiting_for_username)
 
@@ -928,18 +932,37 @@ async def get_username(message: Message, state: FSMContext):
         await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
         await state.clear()
         return
-    username = message.text.strip()
-    if username.startswith("@"):
-        username = username[1:]
-    if username.lower() == "нет":
-        username = "Не указан"
-    await state.update_data(username=username)
     
-    await message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
-        reply_markup=phone_keyboard()
-    )
-    await state.set_state(OrderForm.waiting_for_phone)
+    auto_username = message.from_user.username
+    
+    if message.text == "✅ ПОДТВЕРДИТЬ USERNAME":
+        if auto_username:
+            await state.update_data(username=auto_username)
+            await message.answer(
+                f"✅ Username подтверждён: @{auto_username}\n\n"
+                "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
+                reply_markup=phone_keyboard()
+            )
+            await state.set_state(OrderForm.waiting_for_phone)
+        else:
+            await message.answer(
+                "❌ У вас не установлен username в Telegram!\n\n"
+                "Пожалуйста, установите username в настройках Telegram или введите его вручную:",
+                reply_markup=cancel_keyboard()
+            )
+    else:
+        username = message.text.strip()
+        if username.startswith("@"):
+            username = username[1:]
+        if username.lower() == "нет":
+            username = "Не указан"
+        await state.update_data(username=username)
+        await message.answer(
+            f"✅ Username сохранён: @{username}\n\n"
+            "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 3 из 5\n\n📱 ВВЕДИТЕ НОМЕР ТЕЛЕФОНА:\n\nФормат: +7XXXXXXXXXX\nПример: +79001234567\n\nИли нажмите кнопку ниже для автоматической отправки",
+            reply_markup=phone_keyboard()
+        )
+        await state.set_state(OrderForm.waiting_for_phone)
 
 @dp.message(OrderForm.waiting_for_phone)
 async def get_phone(message: Message, state: FSMContext):
@@ -1083,6 +1106,7 @@ async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
     print("📱 При запросе номера телефона есть кнопка 'Поделиться номером'")
+    print("👤 Username подтверждается кнопкой")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
