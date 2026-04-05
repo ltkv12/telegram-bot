@@ -108,7 +108,7 @@ class AdminStates(StatesGroup):
     waiting_for_new_stock = State()
     waiting_for_new_expiry = State()
 
-# ========== ТОВАРЫ (НАЧАЛЬНЫЕ ДАННЫЕ) ==========
+# ========== ТОВАРЫ ==========
 BRAVECTO_TABLETS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_tablets.jpg"
 BRAVECTO_DROPS_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/bravecto_drops.jpg"
 SIMPARICA_PHOTO = "https://raw.githubusercontent.com/ltkv12/telegram-bot/main/images/simparica.jpg"
@@ -305,7 +305,7 @@ CATEGORIES = {
     "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
-# ========== ПРИВЕТСТВИЕ ПРИ ЛЮБОМ СООБЩЕНИИ ==========
+# ========== ПРИВЕТСТВИЕ ==========
 @dp.message()
 async def handle_any_message(message: Message):
     user_id = message.from_user.id
@@ -344,7 +344,6 @@ async def handle_any_message(message: Message):
 async def start_bot(call: CallbackQuery):
     new_text = "🐕 *VetProfil - ветеринарная аптека*\n\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"
     
-    # Проверяем, чтобы не редактировать одно и то же сообщение
     if call.message.text == new_text:
         await call.answer("Вы уже в главном меню!")
         return
@@ -362,8 +361,7 @@ async def start_command(message: Message):
     
     if user_id in users_seen:
         await message.answer(
-            "🐕 *VetProfil - ветеринарная аптека*\n\n"
-            "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
+            "🐕 *VetProfil - ветеринарная аптека*\n\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
             parse_mode="Markdown",
             reply_markup=main_menu()
         )
