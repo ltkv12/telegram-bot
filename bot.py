@@ -1,5 +1,7 @@
 import asyncio
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import re
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
