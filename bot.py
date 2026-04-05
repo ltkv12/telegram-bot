@@ -21,7 +21,6 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Таблица товаров
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY,
@@ -35,19 +34,10 @@ def init_db():
         )
     ''')
     
-    # Таблица корзины
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS carts (
             user_id INTEGER PRIMARY KEY,
             items TEXT
-        )
-    ''')
-    
-    # Таблица пользователей (кто видел приветствие)
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            seen INTEGER DEFAULT 0
         )
     ''')
     
@@ -101,7 +91,7 @@ def load_all_products_from_db():
         products[row['id']] = dict(row)
     return products
 
-# ========== ФУНКЦИИ ДЛЯ РАБОТЫ С КОРЗИНОЙ В БД ==========
+# ========== ФУНКЦИИ ДЛЯ КОРЗИНЫ ==========
 def save_cart_to_db(user_id, cart):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -122,22 +112,6 @@ def delete_cart_from_db(user_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('DELETE FROM carts WHERE user_id = ?', (user_id,))
-    conn.commit()
-    conn.close()
-
-# ========== ФУНКЦИИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ==========
-def is_user_seen(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT seen FROM users WHERE user_id = ?', (user_id,))
-    result = cursor.fetchone()
-    conn.close()
-    return result[0] == 1 if result else False
-
-def mark_user_seen(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('INSERT OR REPLACE INTO users (user_id, seen) VALUES (?, 1)', (user_id,))
     conn.commit()
     conn.close()
 
@@ -275,6 +249,11 @@ def main_menu():
         [InlineKeyboardButton(text="⭐ ОТЗЫВЫ", url=REVIEWS_CHAT_LINK)]
     ])
 
+def start_button():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
+    ])
+
 def admin_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📊 ВСЕ ТОВАРЫ", callback_data="admin_stock")],
@@ -360,22 +339,36 @@ CATEGORIES = {
     "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
-# ========== ПРИВЕТСТВИЕ ==========
+# ========== ГЛАВНОЕ - ПРИВЕТСТВИЕ С КНОПКОЙ ==========
+@dp.message(Command("start"))
+async def start_command(message: Message, state: FSMContext):
+    # Сбрасываем состояние
+    await state.clear()
+    
+    # Всегда показываем кнопку "ЗАПУСТИТЬ БОТА"
+    welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
+    
+    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button())
+
+# При любом сообщении (если не /start) - тоже показываем кнопку
 @dp.message()
 async def handle_any_message(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    
-    if is_user_seen(user_id):
-        return
-    
-    if message.text and message.text.startswith("/start"):
-        return
-    
-    mark_user_seen(user_id)
-    
-    start_button = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
-    ])
+    # Сбрасываем состояние
+    await state.clear()
     
     welcome_text = """🐾 *VetProfil* 
 
@@ -393,76 +386,17 @@ async def handle_any_message(message: Message, state: FSMContext):
 
 👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
     
-    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button)
+    await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button())
 
 @dp.callback_query(F.data == "start_bot")
 async def start_bot(call: CallbackQuery):
-    new_text = "🐕 *VetProfil - ветеринарная аптека*\n\n👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"
-    
-    if call.message.text == new_text:
-        await call.answer("Вы уже в главном меню!")
-        return
-    
     await call.message.edit_text(
-        new_text,
+        "🐕 *VetProfil - ветеринарная аптека*\n\n"
+        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
         parse_mode="Markdown",
         reply_markup=main_menu()
     )
     await call.answer()
-
-@dp.message(Command("start"))
-async def start_command(message: Message, state: FSMContext):
-    await state.clear()
-    
-    user_id = message.from_user.id
-    
-    if is_user_seen(user_id):
-        await message.answer(
-            "🐕 *VetProfil - ветеринарная аптека*\n\n"
-            "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
-            parse_mode="Markdown",
-            reply_markup=main_menu()
-        )
-    else:
-        mark_user_seen(user_id)
-        start_button = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
-        ])
-        
-        welcome_text = """🐾 *VetProfil* 
-
-🐾 *Профессиональные решения для здоровья животных* 
-
-✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
-
-⚡️ Внимательно подбираем ассортимент 
-⚡️ Контролируем качество 
-⚡️ Работаем на результат 
-
-❤️ *Для тех, кто заботится о своих питомцах осознанно* 
-
-✅ *VetProfil — надёжный партнёр в ветеринарии*
-
-👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
-        
-        await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button)
-
-@dp.message(Command("cancel"))
-async def cancel_action(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state:
-        await state.clear()
-        await message.answer(
-            "✅ Действие отменено!\n\n"
-            "Вы можете начать заново, выбрав действие в меню.",
-            reply_markup=main_menu()
-        )
-    else:
-        await message.answer(
-            "❌ Нет активных действий для отмены.\n\n"
-            "Используйте кнопки меню для навигации.",
-            reply_markup=main_menu()
-        )
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
@@ -470,6 +404,15 @@ async def admin_panel(message: Message):
         await message.answer("⛔ Нет доступа")
         return
     await message.answer("🔧 АДМИН-ПАНЕЛЬ\n\nУправление товарами:", reply_markup=admin_menu())
+
+@dp.message(Command("cancel"))
+async def cancel_action(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "✅ Действие отменено!\n\n"
+        "Нажмите кнопку ниже для продолжения:",
+        reply_markup=start_button()
+    )
 
 # ========== ПОИСК ==========
 @dp.callback_query(F.data == "search")
@@ -1046,7 +989,7 @@ async def checkout(call: CallbackQuery, state: FSMContext):
 @dp.message(OrderForm.waiting_for_fullname)
 async def get_fullname(message: Message, state: FSMContext):
     if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
         await state.clear()
         return
     if len(message.text.strip()) < 5:
@@ -1062,7 +1005,7 @@ async def get_fullname(message: Message, state: FSMContext):
 @dp.message(OrderForm.waiting_for_username)
 async def get_username(message: Message, state: FSMContext):
     if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
         await state.clear()
         return
     
@@ -1100,7 +1043,7 @@ async def get_username(message: Message, state: FSMContext):
 @dp.message(OrderForm.waiting_for_phone)
 async def get_phone(message: Message, state: FSMContext):
     if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
         await state.clear()
         return
     
@@ -1148,7 +1091,7 @@ async def select_delivery(call: CallbackQuery, state: FSMContext):
 @dp.message(OrderForm.waiting_for_pickup_point)
 async def get_pickup_point(message: Message, state: FSMContext):
     if message.text == "◀️ ОТМЕНА":
-        await message.answer("❌ Оформление заказа отменено", reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+        await message.answer("❌ Оформление заказа отменено", reply_markup=start_button())
         await state.clear()
         return
     
@@ -1215,23 +1158,12 @@ async def get_pickup_point(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "main_back")
 async def main_back(call: CallbackQuery):
-    welcome_text = """🐾 *VetProfil* 
-
-🐾 *Профессиональные решения для здоровья животных* 
-
-✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
-
-⚡️ Внимательно подбираем ассортимент 
-⚡️ Контролируем качество 
-⚡️ Работаем на результат 
-
-❤️ *Для тех, кто заботится о своих питомцах осознанно* 
-
-✅ *VetProfil — надёжный партнёр в ветеринарии*
-
-👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇"""
-    
-    await call.message.answer(welcome_text, parse_mode="Markdown", reply_markup=main_menu())
+    await call.message.answer(
+        "🐕 *VetProfil - ветеринарная аптека*\n\n"
+        "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
+        parse_mode="Markdown",
+        reply_markup=main_menu()
+    )
     await call.message.delete()
     await call.answer()
 
@@ -1239,8 +1171,7 @@ async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
     print("🛒 Корзина сохраняется в базе данных!")
-    print("👥 Пользователи сохраняются в базе данных!")
-    print("❌ Команда /cancel для отмены действий")
+    print("🚀 Кнопка 'ЗАПУСТИТЬ БОТА' показывается при каждом /start")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
