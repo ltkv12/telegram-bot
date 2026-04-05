@@ -13,6 +13,9 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# ========== ОТСЛЕЖИВАНИЕ НОВЫХ ПОЛЬЗОВАТЕЛЕЙ ==========
+users_seen = set()
+
 # ========== НАСТРОЙКА БАЗЫ ДАННЫХ ==========
 DB_PATH = "products.db"
 
@@ -302,9 +305,23 @@ CATEGORIES = {
     "tixfli": {"name": "🔵 Тиксфли", "short_name": "Тиксфли", "desc": "✅ Защита от блох и клещей", "photo": TIXFLI_PHOTO, "products": TIXFLI, "keywords": ["тиксфли", "tixfli"]}
 }
 
-# ========== ПРИВЕТСТВИЕ С КНОПКОЙ СТАРТ ==========
-@dp.message(Command("start"))
-async def start(message: Message):
+# ========== ПРИВЕТСТВИЕ ПРИ ЛЮБОМ СООБЩЕНИИ ОТ НОВОГО ПОЛЬЗОВАТЕЛЯ ==========
+@dp.message()
+async def handle_any_message(message: Message):
+    user_id = message.from_user.id
+    
+    # Если пользователь уже видел приветствие - ничего не делаем
+    if user_id in users_seen:
+        return
+    
+    # Если пользователь ввёл команду start - не показываем дубль
+    if message.text and message.text.startswith("/start"):
+        return
+    
+    # Добавляем пользователя в список увиденных
+    users_seen.add(user_id)
+    
+    # Показываем приветствие с кнопкой
     start_button = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
     ])
@@ -336,6 +353,41 @@ async def start_bot(call: CallbackQuery):
         reply_markup=main_menu()
     )
     await call.answer()
+
+@dp.message(Command("start"))
+async def start_command(message: Message):
+    # Если пользователь уже видел приветствие - сразу показываем меню
+    if message.from_user.id in users_seen:
+        await message.answer(
+            "🐕 *VetProfil - ветеринарная аптека*\n\n"
+            "👇 *ВЫБЕРИТЕ ДЕЙСТВИЕ* 👇",
+            parse_mode="Markdown",
+            reply_markup=main_menu()
+        )
+    else:
+        # Новый пользователь - показываем приветствие
+        users_seen.add(message.from_user.id)
+        start_button = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ БОТА", callback_data="start_bot")]
+        ])
+        
+        welcome_text = """🐾 *VetProfil* 
+
+🐾 *Профессиональные решения для здоровья животных* 
+
+✏️ Мы предлагаем ветеринарные препараты и товары от проверенных производителей, которым доверяют специалисты 
+
+⚡️ Внимательно подбираем ассортимент 
+⚡️ Контролируем качество 
+⚡️ Работаем на результат 
+
+❤️ *Для тех, кто заботится о своих питомцах осознанно* 
+
+✅ *VetProfil — надёжный партнёр в ветеринарии*
+
+👇 *НАЖМИТЕ КНОПКУ ДЛЯ ЗАПУСКА* 👇"""
+        
+        await message.answer(welcome_text, parse_mode="Markdown", reply_markup=start_button)
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
@@ -894,7 +946,7 @@ async def admin_back(call: CallbackQuery):
     await call.message.delete()
     await call.answer()
 
-# ========== ОФОРМЛЕНИЕ ЗАКАЗА С КНОПКАМИ ==========
+# ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
 @dp.callback_query(F.data == "checkout")
 async def checkout(call: CallbackQuery, state: FSMContext):
     if not carts.get(call.from_user.id):
@@ -1105,8 +1157,7 @@ async def main_back(call: CallbackQuery):
 async def main():
     print("🚀 Бот VetProfil запущен!")
     print("💾 Остатки сохраняются в базе данных SQLite!")
-    print("📱 При запросе номера телефона есть кнопка 'Поделиться номером'")
-    print("👤 Username подтверждается кнопкой")
+    print("👋 При первом сообщении показывается приветствие с кнопкой")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
