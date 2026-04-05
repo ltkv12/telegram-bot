@@ -87,6 +87,9 @@ ADMINS_IDS = [int(id.strip()) for id in os.environ.get("ADMINS_IDS", str(OWNER_I
 ORDERS_CHAT_ID = int(os.environ.get("ORDERS_CHAT_ID", OWNER_ID))
 REVIEWS_CHAT_LINK = os.environ.get("REVIEWS_CHAT_LINK", "https://t.me/+xxxxxxxxxxx")
 
+# Адрес самовывоза
+PICKUP_ADDRESS = "г. Москва, ВАО, 15-я Парковая улица, дом 38"
+
 # ========== СОСТОЯНИЯ ==========
 class OrderForm(StatesGroup):
     waiting_for_fullname = State()
@@ -275,6 +278,13 @@ def delivery_menu():
         [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="main_back")]
     ])
 
+# Клавиатура для подтверждения самовывоза (без ввода адреса)
+def pickup_confirm_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ ПОДТВЕРДИТЬ ЗАКАЗ", callback_data="confirm_pickup")],
+        [InlineKeyboardButton(text="◀️ НАЗАД", callback_data="delivery_back")]
+    ])
+
 def faq_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🛍️ КАТАЛОГ", callback_data="catalog")],
@@ -456,10 +466,12 @@ async def search_go_to_category(call: CallbackQuery):
 # ========== ЧАСТЫЕ ВОПРОСЫ ==========
 @dp.callback_query(F.data == "faq")
 async def faq(call: CallbackQuery):
-    faq_text = """❓ *ЧАСТЫЕ ВОПРОСЫ*
+    faq_text = f"""❓ *ЧАСТЫЕ ВОПРОСЫ*
 
 📍 *Самовывоз*
-Самовывоз возможен в Москве в районе ВАО (адрес уточняйте после согласования заказа и времени самовывоза). Оплата наличными.
+Самовывоз возможен в Москве по адресу:
+{PICKUP_ADDRESS}
+(адрес уточняйте после согласования заказа и времени самовывоза). Оплата наличными.
 
 📩 *Доставка в другие регионы*
 Осуществляется в пункты выдачи заказов (ПВЗ) Яндекс/СДЭК/Озон
@@ -999,17 +1011,107 @@ async def get_phone(message: Message, state: FSMContext):
 @dp.callback_query(OrderForm.waiting_for_delivery, F.data.startswith("delivery_"))
 async def select_delivery(call: CallbackQuery, state: FSMContext):
     service = call.data.split("_")[1]
-    if service == "samovyvoz":
-        service = "САМОВЫВОЗ"
-    await state.update_data(delivery=service)
     
+    if service == "samovyvoz":
+        # Для самовывоза показываем адрес и кнопку подтверждения
+        await state.update_data(delivery="САМОВЫВОЗ")
+        await call.message.delete()
+        
+        await call.message.answer(
+            f"🚗 *САМОВЫВОЗ*\n\n"
+            f"📍 Адрес самовывоза:\n{PICKUP_ADDRESS}\n\n"
+            f"⚠️ Время самовывоза согласовывается после оформления заказа.\n\n"
+            f"✅ *ПОДТВЕРДИТЕ ЗАКАЗ, ЧТОБЫ ЗАВЕРШИТЬ ОФОРМЛЕНИЕ*",
+            parse_mode="Markdown",
+            reply_markup=pickup_confirm_keyboard()
+        )
+        await state.set_state(OrderForm.waiting_for_pickup_point)
+        await call.answer()
+    else:
+        # Для остальных служб доставки - запрашиваем адрес ПВЗ
+        await state.update_data(delivery=service.upper())
+        await call.message.delete()
+        
+        await call.message.answer(
+            f"📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, ул. Первомайская, д. 1",
+            reply_markup=cancel_keyboard()
+        )
+        await state.set_state(OrderForm.waiting_for_pickup_point)
+        await call.answer()
+
+@dp.callback_query(F.data == "delivery_back")
+async def delivery_back(call: CallbackQuery, state: FSMContext):
     await call.message.delete()
+    await call.message.answer(
+        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 4 из 5\n\n🚚 ВЫБЕРИТЕ СЛУЖБУ ДОСТАВКИ:",
+        reply_markup=delivery_menu()
+    )
+    await state.set_state(OrderForm.waiting_for_delivery)
+    await call.answer()
+
+@dp.callback_query(F.data == "confirm_pickup")
+async def confirm_pickup(call: CallbackQuery, state: FSMContext):
+    # Подтверждение заказа при самовывозе
+    data = await state.get_data()
+    user_id = call.from_user.id
+    cart = carts.get(user_id, {})
+    
+    username = data.get('username', 'Не указан')
+    
+    if not cart:
+        await call.message.answer("❌ Корзина пуста", reply_markup=main_menu())
+        await state.clear()
+        return
+    
+    for product_id, item in cart.items():
+        current_stock = get_product_stock(int(product_id))
+        if item['qty'] > current_stock:
+            await call.message.answer(f"❌ Невозможно оформить заказ!\n{item['name']} - в наличии {current_stock} шт.")
+            await state.clear()
+            return
+    
+    for product_id, item in cart.items():
+        decrease_stock(int(product_id), item['qty'])
+    
+    total = sum(item['price'] * item['qty'] for item in cart.values())
+    total_items = sum(item['qty'] for item in cart.values())
+    
+    order_text = f"✅ НОВЫЙ ЗАКАЗ!\n\n"
+    order_text += f"👤 ФИО: {data['fullname']}\n"
+    order_text += f"🔹 Username: @{username}\n"
+    order_text += f"📱 Телефон: {data['phone']}\n"
+    order_text += f"🆔 ID: {user_id}\n"
+    order_text += f"🚚 Служба: САМОВЫВОЗ\n"
+    order_text += f"🏠 Адрес самовывоза: {PICKUP_ADDRESS}\n\n"
+    order_text += f"📦 ТОВАРЫ:\n"
+    
+    for item in cart.values():
+        order_text += f"• {item['name']} x{item['qty']} = {item['price'] * item['qty']} руб.\n"
+    
+    order_text += f"\n💰 ИТОГО: {total} руб.\n"
+    order_text += f"📦 ВСЕГО ТОВАРОВ: {total_items} шт."
+    
+    try:
+        await bot.send_message(chat_id=ORDERS_CHAT_ID, text=order_text)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    
+    carts[user_id] = {}
+    await state.clear()
     
     await call.message.answer(
-        "📝 ОФОРМЛЕНИЕ ЗАКАЗА\n\nШаг 5 из 5 (последний)\n\n🏠 УКАЖИТЕ АДРЕС ПУНКТА ВЫДАЧИ,\nгде вам удобно забрать заказ:\n\nНапример: г. Москва, м. Первомайская, ул. Первомайская, д. 1",
-        reply_markup=cancel_keyboard()
+        f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
+        f"👤 {data['fullname']}\n"
+        f"🔹 @{username}\n"
+        f"📱 {data['phone']}\n"
+        f"🚚 САМОВЫВОЗ\n"
+        f"🏠 {PICKUP_ADDRESS}\n"
+        f"💰 {total} руб.\n\n"
+        f"В ближайшее время с Вами свяжутся для согласования времени самовывоза.\n\n"
+        f"🐕 Спасибо за покупку!\n\n"
+        f"⭐ Оставьте отзыв в разделе 'ОТЗЫВЫ'",
+        reply_markup=main_menu()
     )
-    await state.set_state(OrderForm.waiting_for_pickup_point)
     await call.answer()
 
 @dp.message(OrderForm.waiting_for_pickup_point)
@@ -1107,6 +1209,7 @@ async def main():
     print("💾 Остатки сохраняются в базе данных SQLite!")
     print("📱 При запросе номера телефона есть кнопка 'Поделиться номером'")
     print("👤 Username подтверждается кнопкой")
+    print(f"📍 Адрес самовывоза: {PICKUP_ADDRESS}")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
